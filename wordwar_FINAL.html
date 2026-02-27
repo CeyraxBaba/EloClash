@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WordWar — Competitive English</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- ═══════════════════════════════════════════
+     ⚠️  FIREBASE KURULUM - BURALARI DEĞİŞTİR
+     Firebase Console → Project Settings → Web App
+     ════════════════════════════════════════════ -->
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyAnRbz32Eln3qQIFvoUYIgu4fAQCS7d8wM",
+  authDomain:        "eloclash-49e4f.firebaseapp.com",
+  projectId:         "eloclash-49e4f",
+  storageBucket:     "eloclash-49e4f.firebasestorage.app",
+  messagingSenderId: "117589480503",
+  appId:             "1:117589480503:web:b9ee3510a09d7a13d45bb2",
+  measurementId:     "G-0WDWJRZ9HN"
+};
+const DEMO_MODE = false; // Firebase configured ✅
+</script>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* ══════════════════════════════════════
+   WORDWAR — DARK ESPORTS STYLESHEET
+   ══════════════════════════════════════ */
+:root {
+  --bg-deep:#060b14; --bg-dark:#0d1520; --bg-card:#111c2d;
+  --bg-elevated:#162336; --border:#1e3a5f; --border-glow:#1a5cb0;
+  --primary:#0a84ff; --primary-glow:rgba(10,132,255,0.3);
+  --accent:#00d4aa; --accent-glow:rgba(0,212,170,0.3);
+  --gold:#f5a623; --gold-glow:rgba(245,166,35,0.3);
+  --red:#ff3b3b; --green:#30d158; --purple:#bf5af2;
+  --text-primary:#e8f4ff; --text-secondary:#7a9cc0; --text-muted:#3d5a7a;
+  --font-d:'Bebas Neue','Arial Black',Impact,sans-serif;
+  --font-b:'Rajdhani','Segoe UI',Arial,sans-serif;
+  --font-m:'JetBrains Mono',Consolas,'Courier New',monospace;
+  --r:8px; --rl:16px; --t:0.2s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-b);background:var(--bg-deep);color:var(--text-primary);min-height:100vh;overflow-x:hidden;font-size:16px}
+::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:var(--bg-dark)} ::-webkit-scrollbar-thumb{background:var(--border-glow);border-radius:3px}
+
+/* BG Effects */
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(10,132,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(10,132,255,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+.bg-g1{position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(10,132,255,.08),transparent 70%);pointer-events:none;z-index:0;animation:pglow 6s ease-in-out infinite}
+.bg-g2{position:fixed;bottom:-200px;right:-200px;width:700px;height:700px;background:radial-gradient(circle,rgba(0,212,170,.06),transparent 70%);pointer-events:none;z-index:0;animation:pglow 8s ease-in-out infinite reverse}
+@keyframes pglow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+
+/* Layout */
+.page{position:relative;z-index:1;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+.hidden{display:none!important}
+.fade-in{animation:fadeIn .35s ease forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* Navbar */
+.navbar{background:rgba(13,21,32,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none}
+.brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.brand-name{font-family:var(--font-d);font-size:26px;letter-spacing:3px;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;align-items:center;gap:6px}
+.nav-btn{background:transparent;border:none;color:var(--text-secondary);font-family:var(--font-b);font-size:15px;font-weight:600;padding:7px 14px;border-radius:var(--r);cursor:pointer;transition:all var(--t);letter-spacing:.5px}
+.nav-btn:hover,.nav-btn.active{color:var(--text-primary);background:var(--bg-elevated)}
+.nav-user{display:flex;align-items:center;gap:8px;padding:5px 13px;background:var(--bg-card);border:1px solid var(--border);border-radius:30px;cursor:pointer;transition:border-color var(--t)}
+.nav-user:hover{border-color:var(--primary)}
+.nav-av{width:28px;height:28px;border-radius:50%;border:2px solid var(--border-glow);object-fit:cover}
+.nav-av-text{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;font-family:var(--font-d)}
+.nav-elo{font-family:var(--font-m);font-size:13px;color:var(--gold);font-weight:600}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 26px;border-radius:var(--r);font-family:var(--font-d);font-size:17px;letter-spacing:1.5px;border:none;cursor:pointer;transition:all var(--t);text-decoration:none;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.1),transparent);opacity:0;transition:opacity var(--t)}
+.btn:hover::before{opacity:1}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),#0066cc);color:white;box-shadow:0 4px 20px var(--primary-glow)}
+.btn-primary:hover{box-shadow:0 8px 30px var(--primary-glow);transform:translateY(-2px)}
+.btn-accent{background:linear-gradient(135deg,var(--accent),#00a080);color:#060b14;box-shadow:0 4px 20px var(--accent-glow)}
+.btn-accent:hover{box-shadow:0 8px 30px var(--accent-glow);transform:translateY(-2px)}
+.btn-google{background:white;color:#1a1a1a;font-family:var(--font-b);font-weight:700;font-size:15px;letter-spacing:.5px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.btn-google:hover{box-shadow:0 8px 30px rgba(0,0,0,.5);transform:translateY(-2px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-secondary)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-glow)}
+.btn-lg{padding:15px 38px;font-size:22px}
+.btn-block{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* Cards */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rl);padding:22px}
+.card:hover{border-color:var(--border-glow)}
+
+/* Forms */
+.fg{display:flex;flex-direction:column;gap:5px}
+.flabel{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;text-transform:uppercase}
+.finput{background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);font-family:var(--font-b);font-size:16px;padding:11px 14px;border-radius:var(--r);outline:none;transition:border-color var(--t);width:100%}
+.finput:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.finput::placeholder{color:var(--text-muted)}
+.ferr{color:var(--red);font-size:13px;font-weight:600;min-height:18px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.b-rookie{background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3)}
+.b-intermediate{background:rgba(250,204,21,.15);color:#facc15;border:1px solid rgba(250,204,21,.3)}
+.b-advanced{background:rgba(251,146,60,.15);color:#fb923c;border:1px solid rgba(251,146,60,.3)}
+.b-expert{background:rgba(244,63,94,.15);color:#f43f5e;border:1px solid rgba(244,63,94,.3)}
+.b-master{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+
+/* ── AUTH PAGE ── */
+#page-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.auth-wrap{width:100%;max-width:440px}
+.auth-logo{text-align:center;margin-bottom:36px}
+.auth-logo-t{font-family:var(--font-d);font-size:60px;letter-spacing:8px;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:6px}
+.auth-logo-s{font-size:12px;color:var(--text-muted);letter-spacing:4px;text-transform:uppercase}
+.auth-demo-banner{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);border-radius:var(--r);padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--gold);text-align:center;line-height:1.5}
+.google-btn-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rl);padding:28px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.google-logo{width:24px;height:24px}
+.auth-sep{width:100%;display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:12px;letter-spacing:2px}
+.auth-sep::before,.auth-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-tabs{display:flex;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:20px}
+.auth-tab{flex:1;padding:9px;text-align:center;font-family:var(--font-d);font-size:17px;letter-spacing:2px;color:var(--text-muted);cursor:pointer;border-radius:6px;transition:all var(--t);border:none;background:transparent}
+.auth-tab.active{background:var(--bg-elevated);color:var(--text-primary)}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+
+/* ── DEMO BANNER ── */
+.demo-banner{background:rgba(255,59,59,.1);border:1px solid rgba(255,59,59,.3);border-radius:var(--r);padding:10px 16px;font-size:13px;color:var(--red);display:flex;align-items:center;gap:8px}
+
+/* ── DASHBOARD ── */
+#page-dashboard{padding:28px 0 60px}
+.dash-hero{background:linear-gradient(135deg,var(--bg-card),var(--bg-elevated));border:1px solid var(--border);border-radius:var(--rl);padding:36px;margin-bottom:24px;position:relative;overflow:hidden}
+.dash-hero::before{content:'';position:absolute;top:0;right:0;width:350px;height:100%;background:radial-gradient(ellipse at right,rgba(10,132,255,.08),transparent);pointer-events:none}
+.hero-greet{font-size:13px;color:var(--text-secondary);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px}
+.hero-name{font-family:var(--font-d);font-size:46px;letter-spacing:4px;background:linear-gradient(135deg,var(--text-primary),var(--text-secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;word-break:break-all}
+.hero-stats{display:flex;gap:28px;flex-wrap:wrap}
+.hstat-v{font-family:var(--font-d);font-size:32px;letter-spacing:2px;color:var(--primary);line-height:1}
+.hstat-l{font-size:11px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rl);padding:18px;text-align:center;transition:all var(--t)}
+.stat-card:hover{border-color:var(--border-glow);transform:translateY(-2px)}
+.sc-icon{font-size:26px;margin-bottom:6px}
+.sc-val{font-family:var(--font-d);font-size:30px}
+.sc-lbl{font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.play-area{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rl);padding:36px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.play-area::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center bottom,rgba(0,212,170,.05),transparent 70%);pointer-events:none}
+.play-title{font-family:var(--font-d);font-size:38px;letter-spacing:4px;margin-bottom:10px}
+.play-desc{color:var(--text-secondary);font-size:14px;margin-bottom:24px;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.6}
+.diff-info{display:inline-flex;align-items:center;gap:7px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:30px;padding:7px 18px;margin-bottom:24px;font-size:13px;color:var(--text-secondary)}
+.history-list{min-height:80px}
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.hist-item:last-child{border-bottom:none}
+.hist-empty{text-align:center;padding:28px;color:var(--text-muted);font-size:13px}
+
+/* ── MATCHMAKING ── */
+#page-matchmaking{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px}
+.mm-wrap{text-align:center;max-width:480px;width:100%}
+.mm-title{font-family:var(--font-d);font-size:44px;letter-spacing:4px;margin-bottom:10px;color:var(--primary)}
+.mm-status{color:var(--text-secondary);font-size:15px;margin-bottom:36px;min-height:22px}
+.mm-anim{position:relative;width:180px;height:180px;margin:0 auto 36px}
+.mm-ring{position:absolute;inset:0;border-radius:50%;border:2px solid transparent;animation:spin 2s linear infinite}
+.mm-r1{border-top-color:var(--primary);animation-duration:1.5s}
+.mm-r2{inset:14px;border-right-color:var(--accent);animation-direction:reverse;animation-duration:2s}
+.mm-r3{inset:28px;border-bottom-color:var(--gold);animation-duration:2.5s}
+.mm-center{position:absolute;inset:42px;background:var(--bg-card);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;border:1px solid var(--border)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mm-pvs{display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:28px}
+.mm-player{text-align:center;flex:1}
+.mm-av{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:26px;margin:0 auto 7px;border:2px solid var(--border-glow);overflow:hidden}
+.mm-av img{width:100%;height:100%;object-fit:cover}
+.mm-pname{font-family:var(--font-d);font-size:18px;letter-spacing:1px;margin-bottom:3px}
+.mm-pelo{font-family:var(--font-m);font-size:13px;color:var(--gold)}
+.mm-vs{font-family:var(--font-d);font-size:32px;color:var(--text-muted);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.mm-timer{font-family:var(--font-m);font-size:12px;color:var(--text-muted);margin-top:8px}
+
+/* ── BATTLE ── */
+#page-battle{min-height:100vh;display:flex;flex-direction:column}
+.bt-header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.bt-player{display:flex;align-items:center;gap:10px;flex:1}
+.bt-player.right{flex-direction:row-reverse;text-align:right}
+.bt-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:19px;border:2px solid var(--border);flex-shrink:0;overflow:hidden}
+.bt-av img{width:100%;height:100%;object-fit:cover}
+.bt-av.enemy{background:linear-gradient(135deg,var(--red),#880000)}
+.bt-pname{font-family:var(--font-d);font-size:17px;letter-spacing:1px}
+.bt-pelo{font-family:var(--font-m);font-size:11px;color:var(--gold)}
+.bt-score{display:flex;align-items:center;gap:13px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r);padding:7px 18px}
+.bt-snum{font-family:var(--font-d);font-size:30px;letter-spacing:4px}
+.bt-ssep{color:var(--text-muted);font-family:var(--font-d);font-size:22px}
+.bt-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;max-width:760px;margin:0 auto;width:100%}
+/* Timer ring */
+.bt-timer{position:relative;width:76px;height:76px;margin-bottom:28px}
+.bt-timer svg{transform:rotate(-90deg);width:76px;height:76px}
+.tm-track{fill:none;stroke:var(--border);stroke-width:6}
+.tm-prog{fill:none;stroke:var(--primary);stroke-width:6;stroke-linecap:round;stroke-dasharray:207;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .5s ease}
+.tm-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:26px}
+/* Question */
+.q-num{font-size:12px;color:var(--text-muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;font-weight:700}
+.q-text{font-family:var(--font-d);font-size:26px;letter-spacing:.5px;text-align:center;margin-bottom:32px;line-height:1.25;max-width:640px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:640px}
+.opt{background:var(--bg-elevated);border:2px solid var(--border);color:var(--text-primary);font-family:var(--font-b);font-size:15px;font-weight:600;padding:16px 18px;border-radius:var(--r);cursor:pointer;transition:all var(--t);text-align:left;display:flex;align-items:center;gap:10px}
+.opt-l{width:27px;height:27px;border-radius:6px;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:15px;flex-shrink:0;transition:all var(--t)}
+.opt:hover:not(:disabled){border-color:var(--primary);background:rgba(10,132,255,.1)}
+.opt:hover:not(:disabled) .opt-l{background:var(--primary);color:white}
+.opt.correct{border-color:var(--green);background:rgba(48,209,88,.15)}
+.opt.correct .opt-l{background:var(--green);color:white}
+.opt.wrong{border-color:var(--red);background:rgba(255,59,59,.15)}
+.opt.wrong .opt-l{background:var(--red);color:white}
+.opt:disabled{cursor:not-allowed}
+/* Explanation */
+.exp-box{background:var(--bg-elevated);border:1px solid var(--border-glow);border-radius:var(--r);padding:11px 14px;font-size:13px;color:var(--text-secondary);margin-top:14px;max-width:640px;width:100%;text-align:left;display:flex;align-items:flex-start;gap:7px;opacity:0;transform:translateY(7px);transition:all .3s ease}
+.exp-box.show{opacity:1;transform:translateY(0)}
+/* Live feed */
+.live-feed{margin-top:20px;display:flex;gap:10px;width:100%;max-width:640px}
+.live-s{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:7px;min-height:44px}
+.ldot{width:7px;height:7px;border-radius:50%;flex-shrink:0;animation:blink 1s ease-in-out infinite}
+.ldot.g{background:var(--green)} .ldot.r{background:var(--red)} .ldot.y{background:var(--gold)} .ldot.grey{background:var(--text-muted);animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── RESULTS ── */
+#page-results{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.res-wrap{max-width:560px;width:100%;text-align:center}
+.res-banner{padding:40px 32px 28px;border-radius:var(--rl);margin-bottom:20px;position:relative;overflow:hidden}
+.res-banner.win{background:linear-gradient(135deg,rgba(48,209,88,.15),rgba(0,212,170,.1));border:1px solid rgba(48,209,88,.3)}
+.res-banner.loss{background:linear-gradient(135deg,rgba(255,59,59,.15),rgba(204,0,0,.1));border:1px solid rgba(255,59,59,.3)}
+.res-banner.draw{background:linear-gradient(135deg,rgba(245,166,35,.15),rgba(204,128,0,.1));border:1px solid rgba(245,166,35,.3)}
+.res-emoji{font-size:58px;margin-bottom:14px;display:block;animation:bounce .8s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes bounce{from{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.2) rotate(3deg)}to{transform:scale(1) rotate(0);opacity:1}}
+.res-title{font-family:var(--font-d);font-size:58px;letter-spacing:6px;line-height:1;margin-bottom:6px}
+.res-title.win{color:var(--green)} .res-title.loss{color:var(--red)} .res-title.draw{color:var(--gold)}
+.res-sub{color:var(--text-secondary);font-size:15px;margin-bottom:20px}
+.res-scores{display:flex;justify-content:center;align-items:center;gap:20px;margin-bottom:20px}
+.rs-item{text-align:center}
+.rs-num{font-family:var(--font-d);font-size:44px;letter-spacing:2px;line-height:1}
+.rs-name{font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+.rs-vs{font-family:var(--font-d);font-size:24px;color:var(--text-muted)}
+.elo-chg{display:inline-flex;align-items:center;gap:7px;background:var(--bg-card);border:1px solid var(--border);border-radius:30px;padding:9px 22px;margin-bottom:20px;font-family:var(--font-m);font-size:14px}
+.edp{color:var(--green);font-weight:700} .edn{color:var(--red);font-weight:700} .edn0{color:var(--gold);font-weight:700}
+.res-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ── LEADERBOARD ── */
+#page-leaderboard{padding:28px 0 60px}
+.lb-hdr{margin-bottom:28px}
+.lb-title{font-family:var(--font-d);font-size:48px;letter-spacing:5px;margin-bottom:7px}
+.lb-sub{color:var(--text-secondary);font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reset-badge{font-family:var(--font-m);font-size:12px;color:var(--gold);background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);border-radius:20px;padding:2px 11px}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:14px;margin-bottom:36px}
+.pod-item{display:flex;flex-direction:column;align-items:center;gap:10px}
+.pod-av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);overflow:hidden}
+.pod-av img{width:100%;height:100%;object-fit:cover}
+.pod-1 .pod-av{width:74px;height:74px;border:3px solid var(--gold);box-shadow:0 0 18px var(--gold-glow)}
+.pod-2 .pod-av,.pod-3 .pod-av{width:58px;height:58px}
+.pod-2 .pod-av{border:3px solid #9ba3a9}
+.pod-3 .pod-av{border:3px solid #cd7f32}
+.pod-name{font-family:var(--font-d);font-size:15px;letter-spacing:1px}
+.pod-elo{font-family:var(--font-m);font-size:12px;color:var(--gold)}
+.pod-base{width:100%;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:26px}
+.pod-1 .pod-base{height:72px;background:linear-gradient(to top,rgba(245,166,35,.3),rgba(245,166,35,.1));border:1px solid rgba(245,166,35,.3);color:var(--gold);width:130px}
+.pod-2 .pod-base{height:56px;background:linear-gradient(to top,rgba(155,163,169,.2),rgba(155,163,169,.05));border:1px solid rgba(155,163,169,.2);color:#9ba3a9;width:110px}
+.pod-3 .pod-base{height:42px;background:linear-gradient(to top,rgba(205,127,50,.2),rgba(205,127,50,.05));border:1px solid rgba(205,127,50,.2);color:#cd7f32;width:110px}
+.lb-table{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.lb-thead{display:grid;grid-template-columns:54px 1fr 110px 90px 72px;padding:12px 18px;background:var(--bg-elevated);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase}
+.lb-row{display:grid;grid-template-columns:54px 1fr 110px 90px 72px;padding:13px 18px;border-bottom:1px solid var(--border);align-items:center;transition:background var(--t)}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:var(--bg-elevated)}
+.lb-row.me{background:rgba(10,132,255,.08);border-color:rgba(10,132,255,.2)}
+.rank-n{font-family:var(--font-d);font-size:19px;color:var(--text-muted)}
+.rg{color:var(--gold)} .rs{color:#9ba3a9} .rb{color:#cd7f32}
+.pl-cell{display:flex;align-items:center;gap:9px}
+.pl-av-s{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);object-fit:cover}
+.pl-av-text{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:13px}
+.pl-name{font-weight:700;font-size:14px}
+.elo-c{font-family:var(--font-m);font-size:14px;font-weight:700;color:var(--gold)}
+.wins-c{font-family:var(--font-m);font-size:13px;color:var(--green)}
+.wr-c{font-size:12px;color:var(--text-secondary)}
+.lb-empty{text-align:center;padding:40px;color:var(--text-muted);font-size:13px}
+
+/* Toast */
+.toast-c{position:fixed;bottom:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+.toast{background:var(--bg-elevated);border:1px solid var(--border-glow);border-radius:var(--r);padding:11px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;animation:sIn .3s ease;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.success{border-color:rgba(48,209,88,.4);color:var(--green)}
+.toast.error{border-color:rgba(255,59,59,.4);color:var(--red)}
+.toast.info{border-color:rgba(10,132,255,.4);color:var(--primary)}
+@keyframes sIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes sOut{from{transform:translateX(0);opacity:1}to{transform:translateX(110%);opacity:0}}
+.toast.rm{animation:sOut .3s ease forwards}
+
+/* Profile overlay */
+.pov{position:fixed;inset:0;background:rgba(6,11,20,.8);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s ease}
+.pov.show{opacity:1}
+.pcard{background:var(--bg-card);border:1px solid var(--border-glow);border-radius:var(--rl);padding:28px;max-width:380px;width:100%;transform:scale(.9) translateY(20px);transition:transform .3s ease}
+.pov.show .pcard{transform:scale(1) translateY(0)}
+.p-hdr{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.p-bigav{width:58px;height:58px;border-radius:50%;border:2px solid var(--border-glow);overflow:hidden;flex-shrink:0}
+.p-bigav img{width:100%;height:100%;object-fit:cover}
+.p-bigav-text{width:100%;height:100%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:26px}
+.p-name{font-family:var(--font-d);font-size:26px;letter-spacing:2px}
+.p-email{font-size:12px;color:var(--text-muted);margin-top:2px}
+.pstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.psbox{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center}
+.psbox-v{font-family:var(--font-d);font-size:22px;color:var(--primary);letter-spacing:1px}
+.psbox-l{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* Loading spinner */
+.loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;z-index:10;position:relative}
+.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+
+@media(max-width:768px){
+  .dash-grid{grid-template-columns:1fr 1fr}
+  .opts{grid-template-columns:1fr}
+  .lb-thead,.lb-row{grid-template-columns:42px 1fr 85px 70px}
+  .lb-thead>*:last-child,.lb-row>*:last-child{display:none}
+  .bt-header{flex-wrap:wrap;gap:10px}
+  .hero-name{font-size:32px}
+  .q-text{font-size:21px}
+  .top3-podium{gap:6px}
+}
+@media(max-width:480px){
+  .dash-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-g1"></div>
+<div class="bg-g2"></div>
+<div class="toast-c" id="toastC"></div>
+
+<!-- ── Profile Modal ── -->
+<div class="pov hidden" id="profOv" onclick="if(event.target===this)closeProfile()">
+  <div class="pcard">
+    <div class="p-hdr">
+      <div class="p-bigav" id="pBigAv"><div class="p-bigav-text" id="pBigAvText">?</div></div>
+      <div>
+        <div class="p-name" id="pName">—</div>
+        <div class="p-email" id="pEmail">—</div>
+        <div id="pBadge" style="margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="pstats">
+      <div class="psbox"><div class="psbox-v" id="ps-elo">—</div><div class="psbox-l" data-t="elo_rating">ELO</div></div>
+      <div class="psbox"><div class="psbox-v" id="ps-rank">—</div><div class="psbox-l" data-t="global_rank">Rank</div></div>
+      <div class="psbox"><div class="psbox-v" id="ps-games">—</div><div class="psbox-l" data-t="games">Games</div></div>
+      <div class="psbox"><div class="psbox-v" id="ps-wins">—</div><div class="psbox-l" data-t="wins">Wins</div></div>
+      <div class="psbox"><div class="psbox-v" id="ps-wr">—</div><div class="psbox-l" data-t="win_rate">Win Rate</div></div>
+      <div class="psbox"><div class="psbox-v" id="ps-acc">—</div><div class="psbox-l" data-t="accuracy">Accuracy</div></div>
+    </div>
+    <button class="btn btn-outline btn-block" style="font-size:14px" onclick="handleLogout()" data-t="sign_out">Sign Out</button>
+  </div>
+</div>
+
+<!-- ── Navbar ── -->
+<nav class="navbar hidden" id="navbar">
+  <div class="brand" onclick="showPage('dashboard')">
+    <div class="brand-icon">⚔️</div>
+    <span class="brand-name">WORDWAR</span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn" data-page="dashboard" onclick="showPage('dashboard')" data-t="dashboard">Dashboard</button>
+    <button class="nav-btn" data-page="leaderboard" onclick="showPage('leaderboard')" data-t="leaderboard">Leaderboard</button>
+  </div>
+  <div class="nav-user" id="navUser" onclick="openProfile()">
+    <div id="navAv" class="nav-av-text">?</div>
+    <span id="navName" style="font-weight:700;font-size:13px">—</span>
+    <span id="navElo" class="nav-elo">—</span>
+  </div>
+</nav>
+
+<!-- ════════════ PAGE: LOADING ════════════ -->
+<div class="page" id="page-loading">
+  <div class="loading-screen">
+    <div style="font-family:var(--font-d);font-size:52px;letter-spacing:8px;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">WORDWAR</div>
+    <div class="spinner"></div>
+    <div style="color:var(--text-muted);font-size:13px;letter-spacing:2px" data-t="loading">Loading...</div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE: AUTH ════════════ -->
+<div class="page hidden" id="page-auth">
+  <div id="demoWarning" class="demo-banner hidden" style="position:fixed;top:0;left:0;right:0;z-index:200;border-radius:0;text-align:center">
+    ⚠️ Firebase yapılandırılmamış — Demo modu (veriler kaydedilmez) | Firebase not configured — Demo mode
+  </div>
+  <div class="auth-wrap" style="margin-top:20px">
+    <div class="auth-logo">
+      <div class="auth-logo-t">WORDWAR</div>
+      <div class="auth-logo-s" data-t="tagline">Competitive English Battles</div>
+    </div>
+
+    <div class="google-btn-wrap card">
+      <div style="text-align:center">
+        <div style="font-family:var(--font-d);font-size:22px;letter-spacing:2px;margin-bottom:6px" data-t="sign_in_title">SIGN IN TO PLAY</div>
+        <div style="font-size:13px;color:var(--text-muted)" data-t="sign_in_sub">Create an account or sign in with Google</div>
+      </div>
+
+      <button class="btn btn-google btn-block btn-lg" id="googleBtn" onclick="signInWithGoogle()">
+        <svg class="google-logo" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-t="continue_google">Continue with Google</span>
+      </button>
+
+      <div class="auth-sep" data-t="or">OR</div>
+
+      <!-- Email Auth Tabs -->
+      <div style="width:100%">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin" onclick="showAuthTab('login')" data-t="login">LOGIN</button>
+          <button class="auth-tab" id="tabReg" onclick="showAuthTab('register')" data-t="register">REGISTER</button>
+        </div>
+
+        <!-- Login -->
+        <div id="formLogin" class="auth-form">
+          <div class="fg"><label class="flabel" data-t="email">Email</label><input class="finput" id="lEmail" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')emailLogin()"></div>
+          <div class="fg"><label class="flabel" data-t="password">Password</label><input class="finput" id="lPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')emailLogin()"></div>
+          <div class="ferr" id="loginErr"></div>
+          <button class="btn btn-primary btn-block btn-lg" onclick="emailLogin()" data-t="login">LOGIN</button>
+        </div>
+
+        <!-- Register -->
+        <div id="formReg" class="auth-form hidden">
+          <div class="fg"><label class="flabel" data-t="username">Username</label><input class="finput" id="rName" type="text" placeholder="CoolPlayer123" onkeydown="if(event.key==='Enter')emailRegister()"></div>
+          <div class="fg"><label class="flabel" data-t="email">Email</label><input class="finput" id="rEmail" type="email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')emailRegister()"></div>
+          <div class="fg"><label class="flabel" data-t="password">Password</label><input class="finput" id="rPass" type="password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')emailRegister()"></div>
+          <div class="ferr" id="regErr"></div>
+          <button class="btn btn-accent btn-block btn-lg" onclick="emailRegister()" data-t="create_account">CREATE ACCOUNT</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px;color:var(--text-muted);font-size:11px;letter-spacing:1px" data-t="data_info">
+      Your data is stored securely in the cloud
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE: DASHBOARD ════════════ -->
+<div class="page hidden fade-in" id="page-dashboard">
+  <div class="container" style="padding-top:28px;padding-bottom:60px">
+    <div class="dash-hero">
+      <div class="hero-greet" data-t="welcome_back">Welcome Back</div>
+      <div class="hero-name" id="heroName">Player</div>
+      <div class="hero-stats">
+        <div><div class="hstat-v" id="heroElo" style="color:var(--gold)">1000</div><div class="hstat-l" data-t="elo_rating">ELO Rating</div></div>
+        <div><div class="hstat-v" id="heroGames">0</div><div class="hstat-l" data-t="battles">Battles</div></div>
+        <div><div class="hstat-v" id="heroWR" style="color:var(--green)">0%</div><div class="hstat-l" data-t="win_rate">Win Rate</div></div>
+        <div><div class="hstat-v" id="heroAcc" style="color:var(--accent)">0%</div><div class="hstat-l" data-t="accuracy">Accuracy</div></div>
+        <div><div class="hstat-v" id="heroRank" style="color:var(--purple)">—</div><div class="hstat-l" data-t="global_rank">Rank</div></div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="stat-card"><div class="sc-icon">✅</div><div class="sc-val" id="scWins" style="color:var(--green)">0</div><div class="sc-lbl" data-t="wins">Wins</div></div>
+      <div class="stat-card"><div class="sc-icon">❌</div><div class="sc-val" id="scLoss" style="color:var(--red)">0</div><div class="sc-lbl" data-t="losses">Losses</div></div>
+      <div class="stat-card"><div class="sc-icon">🤝</div><div class="sc-val" id="scDraw" style="color:var(--gold)">0</div><div class="sc-lbl" data-t="draws">Draws</div></div>
+    </div>
+
+    <div class="play-area">
+      <div class="play-title">⚔️ <span data-t="find_battle">FIND A BATTLE</span></div>
+      <div class="play-desc" id="playDesc" data-t="play_desc">Challenge real players near your ELO. 3 questions, one winner.</div>
+      <div class="diff-info" id="diffInfo">—</div><br>
+      <button class="btn btn-accent btn-lg" onclick="startMatchmaking()" id="playBtn">
+        🎯 <span data-t="play_now">PLAY NOW</span>
+      </button>
+      <div style="margin-top:10px;color:var(--text-muted);font-size:12px" data-t="keyboard_hint">
+        Press 1–4 or A–D keys to answer quickly
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-family:var(--font-d);font-size:20px;letter-spacing:2px;margin-bottom:14px" data-t="recent_battles">RECENT BATTLES</div>
+      <div class="history-list" id="histList"><div class="hist-empty" data-t="no_battles">No battles yet. Play your first match!</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE: MATCHMAKING ════════════ -->
+<div class="page hidden" id="page-matchmaking">
+  <div class="mm-wrap">
+    <div class="mm-title" data-t="finding_match">FINDING MATCH</div>
+    <div class="mm-status" id="mmStatus" data-t="searching">Searching for opponent...</div>
+    <div class="mm-anim">
+      <div class="mm-ring mm-r1"></div>
+      <div class="mm-ring mm-r2"></div>
+      <div class="mm-ring mm-r3"></div>
+      <div class="mm-center">⚔️</div>
+    </div>
+    <div class="mm-pvs">
+      <div class="mm-player">
+        <div class="mm-av" id="mmMyAv"><span id="mmMyAvTxt">?</span></div>
+        <div class="mm-pname" id="mmMyName">—</div>
+        <div class="mm-pelo" id="mmMyElo">—</div>
+      </div>
+      <div class="mm-vs">VS</div>
+      <div class="mm-player">
+        <div class="mm-av" id="mmOppAv" style="background:linear-gradient(135deg,var(--red),#660000)"><span id="mmOppAvTxt">?</span></div>
+        <div class="mm-pname" id="mmOppName">???</div>
+        <div class="mm-pelo" id="mmOppElo">???</div>
+      </div>
+    </div>
+    <div class="mm-timer" id="mmTimer" data-t="wait_time">Waiting... 0s</div>
+    <button class="btn btn-outline" onclick="cancelMatchmaking()" data-t="cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- ════════════ PAGE: BATTLE ════════════ -->
+<div class="page hidden" id="page-battle">
+  <div class="bt-header">
+    <div class="bt-player">
+      <div class="bt-av" id="btMyAv"><span id="btMyAvTxt">?</span></div>
+      <div>
+        <div class="bt-pname" id="btMyName">—</div>
+        <div class="bt-pelo" id="btMyElo">—</div>
+      </div>
+    </div>
+    <div class="bt-score">
+      <span class="bt-snum" id="btScP" style="color:var(--green)">0</span>
+      <span class="bt-ssep">—</span>
+      <span class="bt-snum" id="btScO" style="color:var(--red)">0</span>
+    </div>
+    <div class="bt-player right">
+      <div class="bt-av enemy" id="btOppAv"><span id="btOppAvTxt">?</span></div>
+      <div>
+        <div class="bt-pname" id="btOppName">—</div>
+        <div class="bt-pelo" id="btOppElo">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bt-main">
+    <div class="bt-timer">
+      <svg viewBox="0 0 76 76">
+        <circle class="tm-track" cx="38" cy="38" r="33"/>
+        <circle class="tm-prog" id="tmProg" cx="38" cy="38" r="33"/>
+      </svg>
+      <div class="tm-num" id="tmNum">15</div>
+    </div>
+    <div class="q-num" id="qNum">QUESTION 1 OF 3</div>
+    <div class="q-text" id="qText">Loading...</div>
+    <div class="opts" id="optsGrid"></div>
+    <div class="exp-box" id="expBox"><span>💡</span><span id="expText"></span></div>
+    <div class="live-feed">
+      <div class="live-s" id="myStatus"><span class="ldot g"></span><span data-t="thinking">Thinking...</span></div>
+      <div class="live-s" id="oppStatus"><span class="ldot y"></span><span data-t="thinking">Thinking...</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE: RESULTS ════════════ -->
+<div class="page hidden" id="page-results">
+  <div class="res-wrap">
+    <div class="res-banner" id="resBanner">
+      <span class="res-emoji" id="resEmoji">🏆</span>
+      <div class="res-title" id="resTitle">VICTORY</div>
+      <div class="res-sub" id="resSub">Great game!</div>
+      <div class="res-scores">
+        <div class="rs-item"><div class="rs-num" id="rsMy" style="color:var(--green)">0</div><div class="rs-name" data-t="you">YOU</div></div>
+        <div class="rs-vs">—</div>
+        <div class="rs-item"><div class="rs-num" id="rsOpp" style="color:var(--red)">0</div><div class="rs-name" id="rsOppName">OPP</div></div>
+      </div>
+      <div class="elo-chg" id="eloChg">ELO: —</div>
+    </div>
+    <div class="res-acts">
+      <button class="btn btn-accent btn-lg" onclick="startMatchmaking()">⚔️ <span data-t="play_again">PLAY AGAIN</span></button>
+      <button class="btn btn-outline" onclick="showPage('dashboard')" data-t="dashboard">Dashboard</button>
+      <button class="btn btn-outline" onclick="showPage('leaderboard')">🏆 <span data-t="leaderboard">Leaderboard</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE: LEADERBOARD ════════════ -->
+<div class="page hidden" id="page-leaderboard">
+  <div class="container">
+    <div class="lb-hdr">
+      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+        <div class="lb-title" data-t="leaderboard">LEADERBOARD</div>
+        <div class="lb-sub"><span data-t="monthly_rankings">Monthly Rankings</span> · <span class="reset-badge" id="resetBadge">—</span></div>
+      </div>
+      <div style="color:var(--text-muted);font-size:12px;margin-top:6px" data-t="lb_desc">Top 100 players by ELO. Resets every month.</div>
+    </div>
+    <div class="podium" id="podiumWrap"></div>
+    <div class="lb-table">
+      <div class="lb-thead"><div data-t="rank">RANK</div><div data-t="player">PLAYER</div><div>ELO</div><div data-t="wins">WINS</div><div data-t="win_rate">WIN%</div></div>
+      <div id="lbBody"><div class="lb-empty" data-t="loading">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════
+// 0. LANGUAGE SYSTEM
+// ══════════════════════════════════════════════════════
+const LANG_CODE = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
+
+const T = {
+  en: {
+    loading:'Loading...', tagline:'Competitive English Battles', sign_in_title:'SIGN IN TO PLAY',
+    sign_in_sub:'Create an account or sign in with Google', continue_google:'Continue with Google',
+    or:'OR', login:'LOGIN', register:'REGISTER', email:'Email', password:'Password',
+    username:'Username', create_account:'CREATE ACCOUNT', data_info:'Your data is stored securely in the cloud',
+    welcome_back:'Welcome Back', elo_rating:'ELO Rating', battles:'Battles', win_rate:'Win Rate',
+    accuracy:'Accuracy', global_rank:'Global Rank', wins:'Wins', losses:'Losses', draws:'Draws',
+    find_battle:'FIND A BATTLE', play_desc:'Challenge real players near your ELO. 3 questions, one winner.',
+    play_now:'PLAY NOW', keyboard_hint:'Press 1–4 or A–D keys to answer quickly',
+    recent_battles:'RECENT BATTLES', no_battles:'No battles yet. Play your first match!',
+    finding_match:'FINDING MATCH', searching:'Searching for opponent...', cancel:'Cancel',
+    wait_time:'Waiting...', thinking:'Thinking...', question_of:'Question {n} of {t}',
+    you:'YOU', play_again:'PLAY AGAIN', dashboard:'Dashboard', leaderboard:'Leaderboard',
+    monthly_rankings:'Monthly Rankings', lb_desc:'Top 100 players by ELO. Resets every month.',
+    rank:'RANK', player:'PLAYER', elo:'ELO',
+    sign_out:'Sign Out', difficulty_label:'Your difficulty level:',
+    result_win:'VICTORY', result_loss:'DEFEAT', result_draw:'DRAW',
+    result_sub_win:'You dominated {opp}! Well played!',
+    result_sub_loss:'{opp} was stronger. Keep training!',
+    result_sub_draw:'Perfectly matched! Rematch?',
+    no_opponent:'No opponent found. Try again!',
+    matched_with:'Matched with {opp}!', match_starting:'Match starting...',
+    correct:'Correct! ✓', wrong:'Wrong answer ✗', timed_out:'Time ran out!',
+    opp_correct:'Correct! ✓', opp_wrong:'Wrong answer ✗', opp_thinking:'Thinking...',
+    opp_answered:'Answered ✓', resets_in:'Resets in {d}d {h}h',
+    demo_mode:'Demo mode — data is not saved',
+    rookie:'ROOKIE', intermediate:'INTERMEDIATE', advanced:'ADVANCED', expert:'EXPERT', master:'MASTER',
+  },
+  tr: {
+    loading:'Yükleniyor...', tagline:'Rekabetçi İngilizce Düelloları', sign_in_title:'OYNAMAK İÇİN GİRİŞ YAP',
+    sign_in_sub:'Hesap oluştur veya Google ile giriş yap', continue_google:'Google ile Devam Et',
+    or:'VEYA', login:'GİRİŞ', register:'KAYIT', email:'E-posta', password:'Şifre',
+    username:'Kullanıcı Adı', create_account:'HESAP OLUŞTUR', data_info:'Verileriniz güvenli şekilde bulutta saklanır',
+    welcome_back:'Tekrar Hoşgeldin', elo_rating:'ELO Puanı', battles:'Maçlar', win_rate:'Kazanma Oranı',
+    accuracy:'Doğruluk', global_rank:'Global Sıra', wins:'Galibiyet', losses:'Mağlubiyet', draws:'Beraberlik',
+    find_battle:'RAKİP BUL', play_desc:'ELO\'na yakın gerçek oyuncularla oyna. 3 soru, 1 kazanan.',
+    play_now:'OYNA', keyboard_hint:'Hızlı cevap için 1-4 veya A-D tuşlarını kullan',
+    recent_battles:'SON MAÇLAR', no_battles:'Henüz maç yok. İlk maçını oyna!',
+    finding_match:'RAKİP ARANIYOR', searching:'Rakip aranıyor...', cancel:'İptal',
+    wait_time:'Bekleniyor...', thinking:'Düşünüyor...', question_of:'{n}. soru / {t} soru',
+    you:'SEN', play_again:'TEKRAR OYNA', dashboard:'Ana Sayfa', leaderboard:'Sıralama',
+    monthly_rankings:'Aylık Sıralama', lb_desc:'ELO\'ya göre ilk 100 oyuncu. Her ay sıfırlanır.',
+    rank:'SIRA', player:'OYUNCU', elo:'ELO',
+    sign_out:'Çıkış Yap', difficulty_label:'Seviyene göre sorular:',
+    result_win:'GALİBİYET', result_loss:'YENILGI', result_draw:'BERABERLİK',
+    result_sub_win:'{opp} oyuncusunu geçtin! Harika oynandı!',
+    result_sub_loss:'{opp} bu sefer daha güçlüydü. Daha çok çalış!',
+    result_sub_draw:'Çok dengeli bir maç! Rövanş?',
+    no_opponent:'Rakip bulunamadı. Tekrar dene!',
+    matched_with:'{opp} ile eşleşildi!', match_starting:'Maç başlıyor...',
+    correct:'Doğru! ✓', wrong:'Yanlış cevap ✗', timed_out:'Süre doldu!',
+    opp_correct:'Doğru! ✓', opp_wrong:'Yanlış cevap ✗', opp_thinking:'Düşünüyor...',
+    opp_answered:'Cevapladı ✓', resets_in:'{d} gün {h} saat sonra sıfırlanır',
+    demo_mode:'Demo modu — veriler kaydedilmez',
+    rookie:'ACEMI', intermediate:'ORTA SEVİYE', advanced:'İLERİ', expert:'UZMAN', master:'USTA',
+  },
+  de: {
+    loading:'Laden...', tagline:'Wettbewerbsfähige Englisch-Duelle', sign_in_title:'EINLOGGEN & SPIELEN',
+    sign_in_sub:'Konto erstellen oder mit Google anmelden', continue_google:'Mit Google fortfahren',
+    or:'ODER', login:'ANMELDEN', register:'REGISTRIEREN', email:'E-Mail', password:'Passwort',
+    username:'Benutzername', create_account:'KONTO ERSTELLEN', data_info:'Ihre Daten werden sicher in der Cloud gespeichert',
+    welcome_back:'Willkommen zurück', elo_rating:'ELO-Wertung', battles:'Kämpfe', win_rate:'Gewinnrate',
+    accuracy:'Genauigkeit', global_rank:'Globaler Rang', wins:'Siege', losses:'Niederlagen', draws:'Unentschieden',
+    find_battle:'KAMPF FINDEN', play_desc:'Fordere echte Spieler in deiner ELO heraus. 3 Fragen, ein Gewinner.',
+    play_now:'SPIELEN', keyboard_hint:'Drücke 1–4 oder A–D für schnelle Antworten',
+    recent_battles:'LETZTE KÄMPFE', no_battles:'Noch keine Kämpfe. Spiel deinen ersten Match!',
+    finding_match:'SUCHE GEGNER', searching:'Suche Gegner...', cancel:'Abbrechen',
+    wait_time:'Warten...', thinking:'Denkt nach...', question_of:'Frage {n} von {t}',
+    you:'DU', play_again:'NOCHMAL SPIELEN', dashboard:'Dashboard', leaderboard:'Bestenliste',
+    monthly_rankings:'Monatliche Rangliste', lb_desc:'Top 100 Spieler nach ELO. Setzt sich monatlich zurück.',
+    rank:'RANG', player:'SPIELER', elo:'ELO',
+    sign_out:'Abmelden', difficulty_label:'Schwierigkeitsgrad:',
+    result_win:'SIEG', result_loss:'NIEDERLAGE', result_draw:'UNENTSCHIEDEN',
+    result_sub_win:'Du hast {opp} besiegt! Gut gespielt!',
+    result_sub_loss:'{opp} war diesmal stärker. Weiter üben!',
+    result_sub_draw:'Gleichwertig gespielt! Revanche?',
+    no_opponent:'Kein Gegner gefunden. Versuche es erneut!',
+    matched_with:'Mit {opp} verbunden!', match_starting:'Spiel beginnt...',
+    correct:'Richtig! ✓', wrong:'Falsche Antwort ✗', timed_out:'Zeit abgelaufen!',
+    opp_correct:'Richtig! ✓', opp_wrong:'Falsche Antwort ✗', opp_thinking:'Denkt nach...',
+    opp_answered:'Beantwortet ✓', resets_in:'Setzt in {d}T {h}h zurück',
+    demo_mode:'Demo-Modus — Daten werden nicht gespeichert',
+    rookie:'ANFÄNGER', intermediate:'MITTELSTUFE', advanced:'FORTGESCHRITTEN', expert:'EXPERTE', master:'MEISTER',
+  },
+  fr: {
+    loading:'Chargement...', tagline:'Duels d\'anglais compétitifs', sign_in_title:'CONNECTEZ-VOUS POUR JOUER',
+    sign_in_sub:'Créez un compte ou connectez-vous avec Google', continue_google:'Continuer avec Google',
+    or:'OU', login:'CONNEXION', register:'S\'INSCRIRE', email:'E-mail', password:'Mot de passe',
+    username:'Nom d\'utilisateur', create_account:'CRÉER UN COMPTE', data_info:'Vos données sont stockées en sécurité dans le cloud',
+    welcome_back:'Bon retour', elo_rating:'Classement ELO', battles:'Batailles', win_rate:'Taux de victoire',
+    accuracy:'Précision', global_rank:'Classement mondial', wins:'Victoires', losses:'Défaites', draws:'Matchs nuls',
+    find_battle:'TROUVER UN DUEL', play_desc:'Affronte de vrais joueurs proches de ton ELO. 3 questions, un gagnant.',
+    play_now:'JOUER', keyboard_hint:'Appuie sur 1–4 ou A–D pour répondre rapidement',
+    recent_battles:'DUELS RÉCENTS', no_battles:'Aucun duel. Joue ton premier match!',
+    finding_match:'RECHERCHE ADVERSAIRE', searching:'Recherche d\'adversaire...', cancel:'Annuler',
+    wait_time:'En attente...', thinking:'Réfléchit...', question_of:'Question {n} sur {t}',
+    you:'TOI', play_again:'REJOUER', dashboard:'Tableau de bord', leaderboard:'Classement',
+    monthly_rankings:'Classement mensuel', lb_desc:'Top 100 joueurs par ELO. Réinitialisé chaque mois.',
+    rank:'RANG', player:'JOUEUR', elo:'ELO',
+    sign_out:'Se déconnecter', difficulty_label:'Niveau de difficulté:',
+    result_win:'VICTOIRE', result_loss:'DÉFAITE', result_draw:'MATCH NUL',
+    result_sub_win:'Tu as dominé {opp}! Bien joué!',
+    result_sub_loss:'{opp} était plus fort cette fois. Continue de t\'entraîner!',
+    result_sub_draw:'Match parfaitement équilibré! Revanche?',
+    no_opponent:'Aucun adversaire trouvé. Réessaie!',
+    matched_with:'Jumelé avec {opp}!', match_starting:'Le match commence...',
+    correct:'Correct! ✓', wrong:'Mauvaise réponse ✗', timed_out:'Temps écoulé!',
+    opp_correct:'Correct! ✓', opp_wrong:'Mauvaise réponse ✗', opp_thinking:'Réfléchit...',
+    opp_answered:'A répondu ✓', resets_in:'Réinitialise dans {d}j {h}h',
+    demo_mode:'Mode démo — données non sauvegardées',
+    rookie:'DÉBUTANT', intermediate:'INTERMÉDIAIRE', advanced:'AVANCÉ', expert:'EXPERT', master:'MAÎTRE',
+  },
+  es: {
+    loading:'Cargando...', tagline:'Duelos de inglés competitivos', sign_in_title:'INICIA SESIÓN PARA JUGAR',
+    sign_in_sub:'Crea una cuenta o inicia sesión con Google', continue_google:'Continuar con Google',
+    or:'O', login:'INICIAR SESIÓN', register:'REGISTRARSE', email:'Correo', password:'Contraseña',
+    username:'Nombre de usuario', create_account:'CREAR CUENTA', data_info:'Tus datos se almacenan de forma segura',
+    welcome_back:'Bienvenido de nuevo', elo_rating:'Puntuación ELO', battles:'Batallas', win_rate:'Tasa de victorias',
+    accuracy:'Precisión', global_rank:'Rango global', wins:'Victorias', losses:'Derrotas', draws:'Empates',
+    find_battle:'BUSCAR BATALLA', play_desc:'Desafía a jugadores reales cerca de tu ELO. 3 preguntas, un ganador.',
+    play_now:'JUGAR', keyboard_hint:'Presiona 1–4 o A–D para responder rápido',
+    recent_battles:'BATALLAS RECIENTES', no_battles:'Sin batallas. ¡Juega tu primer partido!',
+    finding_match:'BUSCANDO PARTIDO', searching:'Buscando rival...', cancel:'Cancelar',
+    wait_time:'Esperando...', thinking:'Pensando...', question_of:'Pregunta {n} de {t}',
+    you:'TÚ', play_again:'JUGAR DE NUEVO', dashboard:'Inicio', leaderboard:'Clasificación',
+    monthly_rankings:'Clasificación mensual', lb_desc:'Top 100 por ELO. Se reinicia cada mes.',
+    rank:'RANGO', player:'JUGADOR', elo:'ELO',
+    sign_out:'Cerrar sesión', difficulty_label:'Nivel de dificultad:',
+    result_win:'VICTORIA', result_loss:'DERROTA', result_draw:'EMPATE',
+    result_sub_win:'¡Dominaste a {opp}! ¡Bien jugado!',
+    result_sub_loss:'{opp} fue más fuerte. ¡Sigue entrenando!',
+    result_sub_draw:'¡Batalla muy igualada! ¿Revancha?',
+    no_opponent:'No se encontró rival. ¡Inténtalo de nuevo!',
+    matched_with:'¡Emparejado con {opp}!', match_starting:'El partido comienza...',
+    correct:'¡Correcto! ✓', wrong:'Respuesta incorrecta ✗', timed_out:'¡Se acabó el tiempo!',
+    opp_correct:'¡Correcto! ✓', opp_wrong:'Respuesta incorrecta ✗', opp_thinking:'Pensando...',
+    opp_answered:'Respondió ✓', resets_in:'Se reinicia en {d}d {h}h',
+    demo_mode:'Modo demo — los datos no se guardan',
+    rookie:'PRINCIPIANTE', intermediate:'INTERMEDIO', advanced:'AVANZADO', expert:'EXPERTO', master:'MAESTRO',
+  },
+  ru: {
+    loading:'Загрузка...', tagline:'Соревновательные дуэли по английскому', sign_in_title:'ВОЙДИТЕ ЧТОБЫ ИГРАТЬ',
+    sign_in_sub:'Создайте аккаунт или войдите через Google', continue_google:'Продолжить с Google',
+    or:'ИЛИ', login:'ВОЙТИ', register:'РЕГИСТРАЦИЯ', email:'Email', password:'Пароль',
+    username:'Имя пользователя', create_account:'СОЗДАТЬ АККАУНТ', data_info:'Ваши данные надёжно хранятся в облаке',
+    welcome_back:'С возвращением', elo_rating:'Рейтинг ELO', battles:'Матчи', win_rate:'Процент побед',
+    accuracy:'Точность', global_rank:'Глобальный рейтинг', wins:'Победы', losses:'Поражения', draws:'Ничьи',
+    find_battle:'НАЙТИ БОЙ', play_desc:'Бросай вызов реальным игрокам. 3 вопроса, один победитель.',
+    play_now:'ИГРАТЬ', keyboard_hint:'Нажми 1–4 или A–D для быстрого ответа',
+    recent_battles:'ПОСЛЕДНИЕ БОИ', no_battles:'Нет матчей. Сыграй первый бой!',
+    finding_match:'ПОИСК МАТЧА', searching:'Ищем соперника...', cancel:'Отмена',
+    wait_time:'Ожидание...', thinking:'Думает...', question_of:'Вопрос {n} из {t}',
+    you:'ВЫ', play_again:'ИГРАТЬ СНОВА', dashboard:'Главная', leaderboard:'Рейтинг',
+    monthly_rankings:'Месячный рейтинг', lb_desc:'Топ-100 по ELO. Сбрасывается каждый месяц.',
+    rank:'МЕСТО', player:'ИГРОК', elo:'ELO',
+    sign_out:'Выйти', difficulty_label:'Уровень сложности:',
+    result_win:'ПОБЕДА', result_loss:'ПОРАЖЕНИЕ', result_draw:'НИЧЬЯ',
+    result_sub_win:'Ты победил {opp}! Отлично сыграно!',
+    result_sub_loss:'{opp} был сильнее. Продолжай тренироваться!',
+    result_sub_draw:'Равный бой! Реванш?',
+    no_opponent:'Соперник не найден. Попробуй ещё раз!',
+    matched_with:'Матч с {opp}!', match_starting:'Матч начинается...',
+    correct:'Правильно! ✓', wrong:'Неверный ответ ✗', timed_out:'Время вышло!',
+    opp_correct:'Правильно! ✓', opp_wrong:'Неверный ответ ✗', opp_thinking:'Думает...',
+    opp_answered:'Ответил ✓', resets_in:'Сброс через {d}д {h}ч',
+    demo_mode:'Демо-режим — данные не сохраняются',
+    rookie:'НОВИЧОК', intermediate:'СРЕДНИЙ', advanced:'ПРОДВИНУТЫЙ', expert:'ЭКСПЕРТ', master:'МАСТЕР',
+  },
+  ar: {
+    loading:'جار التحميل...', tagline:'مبارزات إنجليزية تنافسية', sign_in_title:'سجل الدخول للعب',
+    sign_in_sub:'أنشئ حساباً أو سجل الدخول بـ Google', continue_google:'المتابعة مع Google',
+    or:'أو', login:'تسجيل الدخول', register:'تسجيل', email:'البريد الإلكتروني', password:'كلمة المرور',
+    username:'اسم المستخدم', create_account:'إنشاء حساب', data_info:'بياناتك محفوظة بأمان في السحابة',
+    welcome_back:'مرحباً بعودتك', elo_rating:'تقييم ELO', battles:'المعارك', win_rate:'نسبة الفوز',
+    accuracy:'الدقة', global_rank:'الترتيب العالمي', wins:'انتصارات', losses:'هزائم', draws:'تعادلات',
+    find_battle:'ابحث عن معركة', play_desc:'تحدى لاعبين حقيقيين قريبين من ELO الخاص بك.',
+    play_now:'العب الآن', keyboard_hint:'اضغط 1–4 أو A–D للإجابة السريعة',
+    recent_battles:'المعارك الأخيرة', no_battles:'لا معارك بعد. العب مباراتك الأولى!',
+    finding_match:'البحث عن مباراة', searching:'البحث عن خصم...', cancel:'إلغاء',
+    wait_time:'انتظار...', thinking:'يفكر...', question_of:'سؤال {n} من {t}',
+    you:'أنت', play_again:'العب مرة أخرى', dashboard:'الرئيسية', leaderboard:'قائمة المتصدرين',
+    monthly_rankings:'ترتيب شهري', lb_desc:'أفضل 100 لاعب حسب ELO. يُعاد كل شهر.',
+    rank:'الترتيب', player:'اللاعب', elo:'ELO',
+    sign_out:'تسجيل الخروج', difficulty_label:'مستوى الصعوبة:',
+    result_win:'فوز', result_loss:'هزيمة', result_draw:'تعادل',
+    result_sub_win:'لقد هزمت {opp}! أحسنت!',
+    result_sub_loss:'{opp} كان أقوى هذه المرة. استمر في التدريب!',
+    result_sub_draw:'مباراة متكافئة جداً! مباراة عودة؟',
+    no_opponent:'لم يُعثر على خصم. حاول مرة أخرى!',
+    matched_with:'تطابقت مع {opp}!', match_starting:'المباراة تبدأ...',
+    correct:'صحيح! ✓', wrong:'إجابة خاطئة ✗', timed_out:'انتهى الوقت!',
+    opp_correct:'صحيح! ✓', opp_wrong:'إجابة خاطئة ✗', opp_thinking:'يفكر...',
+    opp_answered:'أجاب ✓', resets_in:'يُعاد في {d} يوم {h} ساعة',
+    demo_mode:'وضع تجريبي — البيانات لا تُحفظ',
+    rookie:'مبتدئ', intermediate:'متوسط', advanced:'متقدم', expert:'خبير', master:'أستاذ',
+  }
+};
+
+const LNG = T[LANG_CODE] || T['en'];
+function t(key, vars) {
+  let s = LNG[key] || T['en'][key] || key;
+  if (vars) Object.keys(vars).forEach(k => s = s.replace('{'+k+'}', vars[k]));
+  return s;
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    el.textContent = t(el.dataset.t);
+  });
+  if (LANG_CODE === 'ar') document.body.style.direction = 'rtl';
+}
+
+// ══════════════════════════════════════════════════════
+// 1. QUESTIONS DATABASE (English questions, localized explanations)
+// ══════════════════════════════════════════════════════
+const EXPL = {
+  en: {
+    e1:"'She goes' uses the correct third-person singular present simple.",
+    e2:"'An' is used before vowel sounds. 'Apple' starts with a vowel sound.",
+    e3:"'Went' is the irregular past tense of 'go'.",
+    e4:"'Sad' is the antonym of 'happy'.",
+    e5:"First-person singular uses 'am' with the verb 'to be'.",
+    e6:"'Their' is a possessive pronoun. 'I like their house' shows possession.",
+    e7:"'Children' is the irregular plural of 'child'.",
+    e8:"For one-syllable adjectives, add '-er' for the comparative.",
+    e9:"Present continuous = am/is/are + verb-ing.",
+    e10:"'Big' means large in size.",
+    m1:"Second conditional uses 'were' for all persons in formal English.",
+    m2:"Present perfect = have/has + past participle. 'Gone' is the past participle of 'go'.",
+    m3:"'Ephemeral' means lasting for a very short time.",
+    m4:"Passive voice for past simple: was/were + past participle.",
+    m5:"'Put up with' means to tolerate something unpleasant.",
+    m6:"In reported speech, present simple shifts to past simple.",
+    m7:"'Meticulous' means very careful and precise.",
+    m8:"'Managed to' is the correct collocation for overcoming difficulty.",
+    m9:"The ice cream cannot run. The modifier is incorrectly attached.",
+    m10:"'Break a leg' is an idiom meaning good luck, especially in theater.",
+    h1:"The subjunctive uses the base form of the verb. 'That he go' is correct.",
+    h2:"'Pen' represents writing; 'sword' represents military force — this is metonymy.",
+    h3:"'Inadmissible' is the correct legal and formal English term.",
+    h4:"'Whoever' is a subject; 'whomever' is an object. Both correctly placed.",
+    h5:"In modern formal English, 'sanguine' means optimistic.",
+    h6:"'Between' requires object pronouns. 'Between you and me' is correct.",
+    h7:"Solipsism: only one's own mind is certain to exist.",
+    h8:"Third conditional: had + past participle → would have + past participle.",
+    h9:"'Tendentious' describes writing that promotes a particular point of view.",
+    h10:"'Data' is technically the plural of 'datum' and takes a plural verb.",
+  },
+  tr: {
+    e1:"'She goes' — üçüncü tekil şahıs için geniş zaman doğru kullanımıdır.",
+    e2:"'An' sesli harfle başlayan kelimelerden önce kullanılır. 'Apple' sesli harfle başlar.",
+    e3:"'Went', 'go' fiilinin düzensiz geçmiş zamanıdır.",
+    e4:"'Sad' (üzgün), 'happy' (mutlu) kelimesinin karşıt anlamlısıdır.",
+    e5:"Birinci tekil şahıs için 'to be' fiili 'am' şeklinde kullanılır.",
+    e6:"'Their' iyelik zamiridir. 'I like their house' ifadesinde sahipliği gösterir.",
+    e7:"'Children', 'child' kelimesinin düzensiz çoğuludur.",
+    e8:"Tek heceli sıfatlara karşılaştırma için '-er' eki eklenir.",
+    e9:"Present continuous = am/is/are + fiil-ing yapısıdır.",
+    e10:"'Big' büyük boyut anlamına gelir.",
+    m1:"İkinci koşullu cümlede tüm şahıslar için 'were' kullanılır (resmi İngilizce).",
+    m2:"Present perfect = have/has + geçmiş katılım. 'Gone', 'go' fiilinin geçmiş katılımıdır.",
+    m3:"'Ephemeral' çok kısa süren, geçici anlamına gelir.",
+    m4:"Geçmiş zamanın pasif yapısı: was/were + geçmiş katılım.",
+    m5:"'Put up with' katlanmak, tahammül etmek anlamına gelir.",
+    m6:"Dolaylı anlatımda geniş zaman → geçmiş zamana dönüşür.",
+    m7:"'Meticulous' çok dikkatli ve titiz anlamına gelir.",
+    m8:"'Managed to' — bir zorluğun üstesinden gelmek için doğru kalıptır.",
+    m9:"Dondurma koşamaz. Sıfat tamlaması yanlış bağlanmıştır (asılı sıfat).",
+    m10:"'Break a leg' tiyatroda özellikle kullanılan 'bol şans' deyimidir.",
+    h1:"Dilek kipi (subjunctive) fiilin yalın hâlini kullanır. 'That he go' doğrudur.",
+    h2:"'Kalem' yazıyı, 'kılıç' askeri gücü temsil eder — bu mecaz-ı mürsel (metonomi)'dir.",
+    h3:"'Inadmissible' hukuki ve resmi İngilizce'de doğru terimdir.",
+    h4:"'Whoever' özne; 'whomever' nesne olarak kullanılır. İkisi de doğru yerde.",
+    h5:"Modern resmi İngilizce'de 'sanguine' iyimser anlamına gelir.",
+    h6:"'Between' nesne zamirleri gerektirir. 'Between you and me' doğrudur.",
+    h7:"Solipsizm: Yalnızca kendi zihninin var olduğundan emin olunabileceği görüşü.",
+    h8:"Üçüncü koşullu: had + geçmiş katılım → would have + geçmiş katılım.",
+    h9:"'Tendentious' belirli bir görüşü savunan, taraflı yazıları tanımlar.",
+    h10:"'Data' teknik olarak 'datum'un çoğuludur ve çoğul fiil alır.",
+  }
+};
+
+function getExpl(id) {
+  const lang = LANG_CODE === 'tr' ? 'tr' : 'en';
+  return (EXPL[lang] && EXPL[lang][id]) || (EXPL['en'][id]) || '';
+}
+
+const QUESTIONS = {
+  easy:[
+    {id:'e1',q:"Which sentence is grammatically correct?",opts:["She go to school every day.","She goes to school every day.","She going to school every day.","She goed to school every day."],a:1},
+    {id:'e2',q:"Choose the correct article: '__ apple a day keeps the doctor away.'",opts:["A","An","The","No article"],a:1},
+    {id:'e3',q:"What is the past tense of 'go'?",opts:["Goed","Gone","Went","Going"],a:2},
+    {id:'e4',q:"Which word means the opposite of 'happy'?",opts:["Joyful","Sad","Excited","Cheerful"],a:1},
+    {id:'e5',q:"Fill in the blank: 'I __ a student.'",opts:["is","are","am","be"],a:2},
+    {id:'e6',q:"Which sentence uses 'their' correctly?",opts:["Their going to the park.","I like their house.","Their is a cat.","Their are many people."],a:1},
+    {id:'e7',q:"What is the plural of 'child'?",opts:["Childs","Childes","Children","Childrens"],a:2},
+    {id:'e8',q:"Choose the correct word: 'She is __ than her brother.'",opts:["tall","more tall","taller","tallest"],a:2},
+    {id:'e9',q:"Which sentence is in the present continuous tense?",opts:["She plays football.","She played football.","She is playing football.","She will play football."],a:2},
+    {id:'e10',q:"What does 'big' mean?",opts:["Small","Fast","Large","Quiet"],a:2},
+  ],
+  medium:[
+    {id:'m1',q:"Choose the correct conditional: 'If I __ you, I would apologize.'",opts:["am","was","were","be"],a:2},
+    {id:'m2',q:"Which sentence uses the present perfect correctly?",opts:["I have went there.","I have gone there.","I have go there.","I gone there."],a:1},
+    {id:'m3',q:"What does 'ephemeral' mean?",opts:["Permanent","Long-lasting","Lasting a very short time","Ancient"],a:2},
+    {id:'m4',q:"Choose the correct passive voice: 'Someone stole my wallet.'",opts:["My wallet was stolen.","My wallet is stolen.","My wallet were stolen.","My wallet stolen."],a:0},
+    {id:'m5',q:"Which phrasal verb means 'to endure or tolerate'?",opts:["Put off","Put up with","Put away","Put down"],a:1},
+    {id:'m6',q:"Select the correct reported speech: 'She said, \"I am tired.\"'",opts:["She said that she is tired.","She said that she was tired.","She said that she were tired.","She said that she will be tired."],a:1},
+    {id:'m7',q:"What is the meaning of 'meticulous'?",opts:["Careless","Showing great attention to detail","Quick","Mysterious"],a:1},
+    {id:'m8',q:"Choose the word: 'Despite her illness, she __ to finish the project.'",opts:["managed","succeeded","achieved","accomplished"],a:0},
+    {id:'m9',q:"Which sentence contains a dangling modifier?",opts:["Running down the street, he slipped.","Running down the street, the ice cream fell.","She ran down the street quickly.","The street was icy when he ran."],a:1},
+    {id:'m10',q:"What does the idiom 'break a leg' mean?",opts:["To get injured","Good luck","Work harder","Take a rest"],a:1},
+  ],
+  hard:[
+    {id:'h1',q:"Which sentence correctly uses the subjunctive mood?",opts:["I suggest that he goes home.","I suggest that he go home.","I suggest that he would go home.","I suggest that he went home."],a:1},
+    {id:'h2',q:"What rhetorical device is used in 'The pen is mightier than the sword'?",opts:["Simile","Hyperbole","Metonymy","Personification"],a:2},
+    {id:'h3',q:"Choose the correct word: 'The lawyer argued that the evidence was __.'",opts:["inadmissible","unadmissible","inadmittable","unadmittable"],a:0},
+    {id:'h4',q:"Which sentence uses 'whom' AND 'whoever' correctly?",opts:["Whoever finishes first wins; give the prize to whomever deserves it.","Whomever finishes first wins; give the prize to whoever deserves it.","Whoever finishes first wins; give the prize to whoever deserves it.","Whomever finishes first wins; give the prize to whomever deserves it."],a:0},
+    {id:'h5',q:"What does 'sanguine' mean in formal English?",opts:["Pessimistic and gloomy","Optimistic, especially in difficult situations","Relating to blood or violence","Extremely calm"],a:1},
+    {id:'h6',q:"Identify the error in: 'Between you and I, the project is behind schedule.'",opts:["No error","'Between' should be 'among'","'I' should be 'me'","'is' should be 'are'"],a:2},
+    {id:'h7',q:"Which best defines 'solipsism'?",opts:["The belief that only one's own mind is sure to exist","An extreme form of altruism","The study of solo performance","A philosophy of collective consciousness"],a:0},
+    {id:'h8',q:"Choose the correct form: 'Had she known, she __ differently.'",opts:["would act","would have acted","will have acted","had acted"],a:1},
+    {id:'h9',q:"What is the meaning of 'tendentious'?",opts:["Neutral and objective","Promoting a particular point of view; biased","Extremely flexible","Relating to tendons"],a:1},
+    {id:'h10',q:"Which sentence is correct in formal academic writing?",opts:["The data shows a clear trend.","The data show a clear trend.","The datas show clear trends.","The datas shows a clear trend."],a:1},
+  ]
+};
+
+function getQsForElo(elo, count=3) {
+  const pool = elo < 1100 ? QUESTIONS.easy : elo < 1500 ? QUESTIONS.medium : QUESTIONS.hard;
+  return [...pool].sort(()=>Math.random()-.5).slice(0,count);
+}
+
+function getDiff(elo) {
+  if(elo<1100) return {key:'rookie',label:t('rookie'),color:'#4ade80',emoji:'🌱',cls:'b-rookie'};
+  if(elo<1300) return {key:'intermediate',label:t('intermediate'),color:'#facc15',emoji:'⚡',cls:'b-intermediate'};
+  if(elo<1500) return {key:'advanced',label:t('advanced'),color:'#fb923c',emoji:'🔥',cls:'b-advanced'};
+  if(elo<1700) return {key:'expert',label:t('expert'),color:'#f43f5e',emoji:'💎',cls:'b-expert'};
+  return {key:'master',label:t('master'),color:'#a855f7',emoji:'👑',cls:'b-master'};
+}
+
+// ══════════════════════════════════════════════════════
+// 2. ELO SYSTEM
+// ══════════════════════════════════════════════════════
+const ELO_START = 1000, ELO_MIN = 400, ELO_MAX = 3000;
+function kFactor(g){ return g<30?40:g<100?30:20; }
+function expectedScore(a,b){ return 1/(1+Math.pow(10,(b-a)/400)); }
+function newElo(elo,oppElo,score,games){
+  const k=kFactor(games), exp=expectedScore(elo,oppElo);
+  return Math.max(ELO_MIN,Math.min(ELO_MAX,Math.round(elo+k*(score-exp))));
+}
+function eloDelta(elo,oppElo,score,games){ return newElo(elo,oppElo,score,games)-elo; }
+
+// ══════════════════════════════════════════════════════
+// 3. FIREBASE + DEMO MODE
+// ══════════════════════════════════════════════════════
+let db, auth, googleProvider;
+let DEMO_USERS={}, DEMO_SESSION=null;
+
+function initFirebase() {
+  if(DEMO_MODE) {
+    console.warn('Demo mode active — Firebase not configured');
+    document.getElementById('demoWarning').classList.remove('hidden');
+    return false;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    googleProvider = new firebase.auth.GoogleAuthProvider();
+    return true;
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    return false;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// 4. AUTH FUNCTIONS
+// ══════════════════════════════════════════════════════
+let currentUser = null, currentFirebaseUser = null;
+
+async function signInWithGoogle() {
+  if(DEMO_MODE){ demoQuickLogin(); return; }
+  try {
+    document.getElementById('googleBtn').disabled = true;
+    const result = await auth.signInWithPopup(googleProvider);
+    await onFirebaseLogin(result.user);
+  } catch(e) {
+    showToast(e.message, 'error');
+    document.getElementById('googleBtn').disabled = false;
+  }
+}
+
+async function emailLogin() {
+  if(DEMO_MODE){ demoEmailLogin(); return; }
+  const email = document.getElementById('lEmail').value.trim();
+  const pass = document.getElementById('lPass').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+  if(!email||!pass){ errEl.textContent = t('email')+'/'+t('password')+' required'; return; }
+  try {
+    const r = await auth.signInWithEmailAndPassword(email, pass);
+    await onFirebaseLogin(r.user);
+  } catch(e) {
+    errEl.textContent = e.code === 'auth/wrong-password' ? 'Wrong password' :
+                        e.code === 'auth/user-not-found' ? 'User not found' : e.message;
+  }
+}
+
+async function emailRegister() {
+  if(DEMO_MODE){ demoEmailRegister(); return; }
+  const username = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const pass = document.getElementById('rPass').value;
+  const errEl = document.getElementById('regErr');
+  errEl.textContent = '';
+  if(!username||!email||!pass){ errEl.textContent = 'All fields required'; return; }
+  if(username.length<3){ errEl.textContent = 'Username min 3 chars'; return; }
+  if(pass.length<6){ errEl.textContent = 'Password min 6 chars'; return; }
+  try {
+    const r = await auth.createUserWithEmailAndPassword(email, pass);
+    await r.user.updateProfile({ displayName: username });
+    await onFirebaseLogin(r.user, username);
+  } catch(e) {
+    errEl.textContent = e.code === 'auth/email-already-in-use' ? 'Email already in use' : e.message;
+  }
+}
+
+async function onFirebaseLogin(fbUser, forcedUsername) {
+  currentFirebaseUser = fbUser;
+  const uid = fbUser.uid;
+  const ref = db.collection('users').doc(uid);
+  const snap = await ref.get();
+  const month = getMonth();
+
+  if(!snap.exists) {
+    const username = forcedUsername || fbUser.displayName || fbUser.email.split('@')[0];
+    currentUser = {
+      uid, username, email: fbUser.email,
+      photoURL: fbUser.photoURL || null,
+      elo: ELO_START, gamesPlayed:0, wins:0, losses:0, draws:0,
+      totalCorrect:0, totalAnswered:0,
+      currentMonth: month, monthlyElo:0, monthlyGames:0,
+      lang: LANG_CODE, createdAt: Date.now()
+    };
+    await ref.set(currentUser);
+  } else {
+    currentUser = snap.data();
+    currentUser.uid = uid;
+    // Monthly reset check
+    if(currentUser.currentMonth !== month) {
+      currentUser.currentMonth = month;
+      currentUser.monthlyElo = 0;
+      currentUser.monthlyGames = 0;
+      await ref.update({ currentMonth: month, monthlyElo: 0, monthlyGames: 0 });
+    }
+  }
+  await updateLeaderboardEntry(currentUser);
+  enterApp();
+}
+
+async function handleLogout() {
+  if(!DEMO_MODE) { try { await auth.signOut(); } catch{} }
+  currentUser = null; currentFirebaseUser = null;
+  closeProfile();
+  showPage('auth');
+  showToast('👋 Goodbye!', 'info');
+}
+
+// ── DEMO MODE AUTH ──
+function demoQuickLogin() {
+  const uid = 'demo_'+Date.now();
+  currentUser = {
+    uid, username:'Guest'+Math.floor(Math.random()*9999), email:'demo@ww.com',
+    photoURL:null, elo:ELO_START, gamesPlayed:0, wins:0, losses:0, draws:0,
+    totalCorrect:0, totalAnswered:0, currentMonth:getMonth(),
+    monthlyElo:0, monthlyGames:0, lang:LANG_CODE, createdAt:Date.now()
+  };
+  DEMO_USERS[uid] = currentUser;
+  DEMO_SESSION = uid;
+  enterApp();
+  showToast('⚡ '+t('demo_mode'), 'info');
+}
+function demoEmailLogin() {
+  const email = document.getElementById('lEmail').value.trim();
+  const pass = document.getElementById('lPass').value;
+  if(!email||!pass){ document.getElementById('loginErr').textContent='Fill all fields'; return; }
+  const found = Object.values(DEMO_USERS).find(u=>u.email===email);
+  if(!found){ document.getElementById('loginErr').textContent='Not found in demo'; return; }
+  currentUser = found; enterApp();
+}
+function demoEmailRegister() {
+  const username = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const pass = document.getElementById('rPass').value;
+  if(!username||!email||!pass){ document.getElementById('regErr').textContent='All required'; return; }
+  if(username.length<3){ document.getElementById('regErr').textContent='Min 3 chars'; return; }
+  if(pass.length<6){ document.getElementById('regErr').textContent='Min 6 chars'; return; }
+  const uid = 'demo_'+Date.now();
+  currentUser = {
+    uid, username, email, photoURL:null, elo:ELO_START,
+    gamesPlayed:0, wins:0, losses:0, draws:0,
+    totalCorrect:0, totalAnswered:0, currentMonth:getMonth(),
+    monthlyElo:0, monthlyGames:0, lang:LANG_CODE, createdAt:Date.now()
+  };
+  DEMO_USERS[uid] = currentUser;
+  DEMO_SESSION = uid;
+  enterApp();
+  showToast('🎉 Account created!', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// 5. PAGE ROUTER
+// ══════════════════════════════════════════════════════
+let currentPage = null;
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  const navbar = document.getElementById('navbar');
+  if(page==='auth'||page==='loading') {
+    navbar.classList.add('hidden');
+  } else {
+    navbar.classList.remove('hidden');
+    updateNavbar();
+    document.querySelectorAll('.nav-btn[data-page]').forEach(b=>
+      b.classList.toggle('active', b.dataset.page===page));
+  }
+  const el = document.getElementById('page-'+page);
+  if(el){ el.classList.remove('hidden'); el.classList.add('fade-in'); }
+  currentPage = page;
+  if(page==='dashboard') renderDashboard();
+  if(page==='leaderboard') renderLeaderboard();
+}
+
+function enterApp() {
+  applyTranslations();
+  showPage('dashboard');
+  showToast('👋 '+t('welcome_back')+', '+currentUser.username+'!', 'success');
+}
+
+function updateNavbar() {
+  if(!currentUser) return;
+  const navAv = document.getElementById('navAv');
+  if(currentUser.photoURL) {
+    navAv.outerHTML = `<img id="navAv" class="nav-av" src="${currentUser.photoURL}" alt="av" onerror="this.outerHTML='<div class=nav-av-text id=navAv>${currentUser.username[0].toUpperCase()}</div>'">`;
+  } else {
+    if(navAv.tagName==='IMG') navAv.outerHTML=`<div class="nav-av-text" id="navAv">${currentUser.username[0].toUpperCase()}</div>`;
+    else navAv.textContent = currentUser.username[0].toUpperCase();
+  }
+  document.getElementById('navName').textContent = currentUser.username;
+  document.getElementById('navElo').textContent = currentUser.elo;
+}
+
+// ══════════════════════════════════════════════════════
+// 6. DASHBOARD
+// ══════════════════════════════════════════════════════
+async function renderDashboard() {
+  if(!currentUser) return;
+  const u = currentUser;
+  const diff = getDiff(u.elo);
+  const acc = u.totalAnswered>0 ? Math.round(u.totalCorrect/u.totalAnswered*100) : 0;
+  const wr  = u.gamesPlayed>0  ? Math.round(u.wins/u.gamesPlayed*100) : 0;
+
+  document.getElementById('heroName').textContent = u.username;
+  document.getElementById('heroElo').textContent  = u.elo;
+  document.getElementById('heroGames').textContent = u.gamesPlayed;
+  document.getElementById('heroWR').textContent   = wr+'%';
+  document.getElementById('heroAcc').textContent  = acc+'%';
+  document.getElementById('scWins').textContent   = u.wins;
+  document.getElementById('scLoss').textContent   = u.losses;
+  document.getElementById('scDraw').textContent   = u.draws||0;
+  document.getElementById('diffInfo').innerHTML   = `<span class="badge ${diff.cls}">${diff.emoji} ${diff.label}</span>&nbsp;· ${t('difficulty_label')} ${u.elo} ELO`;
+
+  // Rank from leaderboard
+  try {
+    const board = await getLeaderboard();
+    const pos = board.findIndex(p=>p.uid===u.uid);
+    document.getElementById('heroRank').textContent = pos>=0 ? '#'+(pos+1) : '—';
+  } catch{}
+
+  // History
+  renderHistory(u);
+}
+
+function renderHistory(u) {
+  const key = 'ww_hist_'+u.uid;
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem(key)||'[]'); } catch{}
+  const el = document.getElementById('histList');
+  if(!history.length) { el.innerHTML=`<div class="hist-empty">${t('no_battles')}</div>`; return; }
+  el.innerHTML = history.slice(0,6).map(m=>{
+    const icon = m.result==='win'?'✅':m.result==='loss'?'❌':'🤝';
+    const dc = m.eloDelta>=0?'var(--green)':'var(--red)';
+    const ds = m.eloDelta>=0?'+'+m.eloDelta:m.eloDelta;
+    return `<div class="hist-item">
+      <div style="display:flex;align-items:center;gap:9px">
+        <span>${icon}</span>
+        <div><div style="font-weight:700;font-size:14px">vs ${m.opp}</div>
+        <div style="color:var(--text-muted);font-size:11px">${m.score} · ${timeAgo(m.time)}</div></div>
+      </div>
+      <div style="font-family:var(--font-m);font-weight:700;color:${dc}">${ds}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// 7. MATCHMAKING — REAL PLAYERS ONLY (Firestore)
+// ══════════════════════════════════════════════════════
+let mmUnsub = null, mmTimer = null, mmSeconds = 0, mmGameId = null;
+
+async function startMatchmaking() {
+  if(!currentUser){ showToast('Not logged in','error'); return; }
+  showPage('matchmaking');
+
+  const u = currentUser;
+  setMMPlayer('my', u);
+  document.getElementById('mmOppName').textContent = '???';
+  document.getElementById('mmOppElo').textContent  = '???';
+  document.getElementById('mmStatus').textContent  = t('searching');
+  document.getElementById('mmOppAvTxt').textContent = '?';
+  mmSeconds = 0;
+
+  // Clear timer
+  if(mmTimer) clearInterval(mmTimer);
+  mmTimer = setInterval(()=>{
+    mmSeconds++;
+    const el = document.getElementById('mmTimer');
+    if(el) el.textContent = t('wait_time').replace('...','')+' '+mmSeconds+'s';
+    if(mmSeconds>=60) {
+      cancelMatchmaking();
+      showToast(t('no_opponent'),'error');
+    }
+  }, 1000);
+
+  if(DEMO_MODE) {
+    // Demo: no real opponent possible
+    setTimeout(()=>{
+      clearInterval(mmTimer);
+      showToast(t('no_opponent'),'error');
+      showPage('dashboard');
+    }, 3000);
+    return;
+  }
+
+  // Write to matchmaking pool
+  const mmRef = db.collection('matchmaking').doc(u.uid);
+  await mmRef.set({
+    uid: u.uid, username: u.username, elo: u.elo,
+    photoURL: u.photoURL||null, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    status:'waiting', gameId:null
+  });
+
+  // Try to find an existing waiting player
+  const snapshot = await db.collection('matchmaking')
+    .where('status','==','waiting')
+    .where('uid','!=',u.uid)
+    .orderBy('uid').orderBy('timestamp').limit(10)
+    .get();
+
+  // Find best ELO match
+  let bestOpp = null, bestDiff = Infinity;
+  snapshot.forEach(doc=>{
+    const d = doc.data();
+    const diff = Math.abs(d.elo - u.elo);
+    if(diff < bestDiff){ bestDiff=diff; bestOpp=d; }
+  });
+
+  if(bestOpp) {
+    // We found an opponent — create the game
+    const gameId = db.collection('games').doc().id;
+    const questions = getQsForElo(Math.min(u.elo, bestOpp.elo), 3);
+
+    await db.runTransaction(async tx=>{
+      const oppRef = db.collection('matchmaking').doc(bestOpp.uid);
+      const oppSnap = await tx.get(oppRef);
+      if(!oppSnap.exists || oppSnap.data().status !== 'waiting') throw new Error('Opponent taken');
+
+      const gameRef = db.collection('games').doc(gameId);
+      tx.set(gameRef, {
+        player1:{uid:u.uid,username:u.username,elo:u.elo,photoURL:u.photoURL||null},
+        player2:{uid:bestOpp.uid,username:bestOpp.username,elo:bestOpp.elo,photoURL:bestOpp.photoURL||null},
+        questions: questions.map(q=>q.id),
+        p1Answers:[], p2Answers:[], currentQ:0,
+        status:'active', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      tx.update(mmRef, {status:'matched', gameId});
+      tx.update(oppRef, {status:'matched', gameId});
+    });
+
+    clearInterval(mmTimer);
+    showOppInMM(bestOpp);
+    document.getElementById('mmStatus').textContent = t('matched_with',{opp:bestOpp.username});
+    setTimeout(()=> startBattle(gameId, questions, u, bestOpp, 'p1'), 1500);
+  } else {
+    // Wait for someone to find us
+    mmUnsub = db.collection('matchmaking').doc(u.uid).onSnapshot(snap=>{
+      const d = snap.data();
+      if(d && d.status==='matched' && d.gameId) {
+        clearInterval(mmTimer);
+        if(mmUnsub){ mmUnsub(); mmUnsub=null; }
+        // Load game
+        db.collection('games').doc(d.gameId).get().then(gSnap=>{
+          const g = gSnap.data();
+          const opp = g.player1.uid===u.uid ? g.player2 : g.player1;
+          const myRole = g.player1.uid===u.uid ? 'p1' : 'p2';
+          const questions = g.questions.map(qid=>{
+            const allQ = [...QUESTIONS.easy,...QUESTIONS.medium,...QUESTIONS.hard];
+            return allQ.find(q=>q.id===qid);
+          });
+          showOppInMM(opp);
+          document.getElementById('mmStatus').textContent = t('matched_with',{opp:opp.username});
+          setTimeout(()=> startBattle(d.gameId, questions, u, opp, myRole), 1500);
+        });
+      }
+    });
+  }
+}
+
+function setMMPlayer(side, p) {
+  const suffix = side==='my';
+  const nameEl = document.getElementById(suffix?'mmMyName':'mmOppName');
+  const eloEl  = document.getElementById(suffix?'mmMyElo':'mmOppElo');
+  const avEl   = document.getElementById(suffix?'mmMyAv':'mmOppAv');
+  const avTxt  = document.getElementById(suffix?'mmMyAvTxt':'mmOppAvTxt');
+  if(nameEl) nameEl.textContent = p.username;
+  if(eloEl)  eloEl.textContent  = p.elo+' ELO';
+  if(p.photoURL && avEl) {
+    avEl.innerHTML = `<img src="${p.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.innerHTML='${p.username[0].toUpperCase()}'">`;
+  } else if(avTxt) { avTxt.textContent = p.username[0].toUpperCase(); }
+}
+
+function showOppInMM(opp) {
+  setMMPlayer('opp', opp);
+  document.getElementById('mmOppName').textContent = opp.username;
+  document.getElementById('mmOppElo').textContent  = opp.elo+' ELO';
+}
+
+function cancelMatchmaking() {
+  if(mmTimer){ clearInterval(mmTimer); mmTimer=null; }
+  if(mmUnsub){ mmUnsub(); mmUnsub=null; }
+  if(!DEMO_MODE && currentUser) {
+    db.collection('matchmaking').doc(currentUser.uid).delete().catch(()=>{});
+  }
+  showPage('dashboard');
+}
+
+// ══════════════════════════════════════════════════════
+// 8. BATTLE
+// ══════════════════════════════════════════════════════
+let battleState = null, battleUnsub = null;
+
+async function startBattle(gameId, questions, me, opp, myRole) {
+  battleState = {
+    gameId, questions, me, opp, myRole,
+    currentQ:0, myScore:0, oppScore:0,
+    myAnswers:[], oppAnswers:[],
+    timer:null, timeLeft:15, answered:false
+  };
+
+  showPage('battle');
+  renderBattleHeader();
+
+  if(!DEMO_MODE) {
+    // Listen to real-time updates
+    battleUnsub = db.collection('games').doc(gameId).onSnapshot(snap=>{
+      const g = snap.data();
+      if(!g || !battleState) return;
+      const oppAnswers = myRole==='p1' ? (g.p2Answers||[]) : (g.p1Answers||[]);
+      // If opponent answered current question and we haven't resolved yet
+      const qi = battleState.currentQ;
+      if(oppAnswers.length > qi && battleState.oppAnswers.length <= qi) {
+        battleState.oppAnswers.push(oppAnswers[qi]);
+        if(battleState.answered) resolveQuestion();
+        else {
+          document.getElementById('oppStatus').innerHTML=
+            `<span class="ldot grey"></span>${t('opp_answered')}`;
+        }
+      }
+    });
+  }
+
+  showQuestion();
+}
+
+function renderBattleHeader() {
+  const {me, opp} = battleState;
+  const setAv = (id, txtId, p, enemy=false) => {
+    const avEl = document.getElementById(id);
+    const txtEl = document.getElementById(txtId);
+    if(p.photoURL && avEl) {
+      avEl.innerHTML = `<img src="${p.photoURL}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${p.username[0].toUpperCase()}'">`;
+    } else if(txtEl) { txtEl.textContent = p.username[0].toUpperCase(); }
+  };
+  setAv('btMyAv','btMyAvTxt',me);
+  setAv('btOppAv','btOppAvTxt',opp,true);
+  document.getElementById('btMyName').textContent = me.username;
+  document.getElementById('btMyElo').textContent  = me.elo+' ELO';
+  document.getElementById('btOppName').textContent = opp.username;
+  document.getElementById('btOppElo').textContent  = opp.elo+' ELO';
+  updateBattleScore();
+}
+
+function updateBattleScore() {
+  document.getElementById('btScP').textContent = battleState.myScore;
+  document.getElementById('btScO').textContent = battleState.oppScore;
+}
+
+function showQuestion() {
+  const s = battleState;
+  const q = s.questions[s.currentQ];
+  if(!q) return;
+  s.answered = false;
+  s.timeLeft  = 15;
+
+  document.getElementById('qNum').textContent = t('question_of',{n:s.currentQ+1,t:s.questions.length});
+  document.getElementById('qText').textContent = q.q;
+
+  const letters = ['A','B','C','D'];
+  document.getElementById('optsGrid').innerHTML = q.opts.map((opt,i)=>
+    `<button class="opt" onclick="selectAnswer(${i})" id="opt${i}">
+      <span class="opt-l">${letters[i]}</span><span>${opt}</span>
+    </button>`
+  ).join('');
+
+  const expBox = document.getElementById('expBox');
+  expBox.classList.remove('show');
+
+  document.getElementById('myStatus').innerHTML  = `<span class="ldot g"></span>${t('thinking')}`;
+  document.getElementById('oppStatus').innerHTML = `<span class="ldot y"></span>${t('opp_thinking')}`;
+
+  updateTimerUI(15,15);
+  clearInterval(s.timer);
+  s.timer = setInterval(()=>{
+    s.timeLeft--;
+    updateTimerUI(s.timeLeft,15);
+    if(s.timeLeft<=0){ clearInterval(s.timer); if(!s.answered) selectAnswer(-1); }
+  },1000);
+}
+
+function updateTimerUI(cur, max) {
+  const circ = 207;
+  const offset = circ - (cur/max)*circ;
+  const prog = document.getElementById('tmProg');
+  const num  = document.getElementById('tmNum');
+  if(prog){
+    prog.style.strokeDashoffset = offset;
+    prog.style.stroke = cur<=5?'var(--red)':cur<=8?'var(--gold)':'var(--primary)';
+  }
+  if(num){
+    num.textContent = cur;
+    num.style.color = cur<=5?'var(--red)':'var(--text-primary)';
+  }
+}
+
+async function selectAnswer(idx) {
+  const s = battleState;
+  if(s.answered) return;
+  s.answered = true;
+  clearInterval(s.timer);
+
+  const q = s.questions[s.currentQ];
+  const correct = idx === q.a;
+  if(correct) s.myScore++;
+  s.myAnswers.push({idx, correct, time: Date.now()});
+
+  // Update status
+  document.getElementById('myStatus').innerHTML =
+    `<span class="ldot ${correct?'g':'r'}"></span>${idx===-1?t('timed_out'):correct?t('correct'):t('wrong')}`;
+
+  // Highlight answer buttons
+  const btns = document.querySelectorAll('.opt');
+  btns.forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.a) b.classList.add('correct');
+    if(idx!==-1 && i===idx && !correct) b.classList.add('wrong');
+  });
+
+  // Show explanation
+  const expText = getExpl(q.id);
+  if(expText) {
+    document.getElementById('expText').textContent = expText;
+    setTimeout(()=> document.getElementById('expBox').classList.add('show'), 100);
+  }
+
+  // Push answer to Firestore
+  if(!DEMO_MODE) {
+    const field = s.myRole==='p1' ? 'p1Answers' : 'p2Answers';
+    await db.collection('games').doc(s.gameId).update({
+      [field]: firebase.firestore.FieldValue.arrayUnion({idx, correct})
+    });
+  }
+
+  // Check if opponent already answered
+  if(s.oppAnswers.length > s.currentQ) {
+    setTimeout(resolveQuestion, 2200);
+  } else {
+    // Wait for opponent (max 8s extra)
+    s.oppWaitTimeout = setTimeout(()=>{
+      // Opponent didn't answer in time — assume wrong
+      if(s.oppAnswers.length <= s.currentQ) {
+        s.oppAnswers.push({idx:-1, correct:false});
+        document.getElementById('oppStatus').innerHTML = `<span class="ldot r"></span>${t('timed_out')}`;
+        resolveQuestion();
+      }
+    }, 8000);
+  }
+}
+
+function resolveQuestion() {
+  const s = battleState;
+  clearTimeout(s.oppWaitTimeout);
+  const qi = s.currentQ;
+  const oppAns = s.oppAnswers[qi] || {correct:false};
+
+  if(oppAns.correct) s.oppScore++;
+  updateBattleScore();
+
+  const oppCorrect = oppAns.correct;
+  document.getElementById('oppStatus').innerHTML =
+    `<span class="ldot ${oppCorrect?'g':'r'}"></span>${oppCorrect?t('opp_correct'):t('opp_wrong')}`;
+
+  setTimeout(()=>{
+    s.currentQ++;
+    if(s.currentQ < s.questions.length) showQuestion();
+    else endBattle();
+  }, 2500);
+}
+
+async function endBattle() {
+  if(battleUnsub){ battleUnsub(); battleUnsub=null; }
+  const s = battleState;
+  const {me, opp, myScore, oppScore, questions} = s;
+
+  let result = myScore>oppScore?'win':myScore<oppScore?'loss':'draw';
+  const score = result==='win'?1:result==='loss'?0:0.5;
+  const delta = eloDelta(me.elo, opp.elo, score, me.gamesPlayed);
+  const newEloVal = me.elo + delta;
+
+  // Update local user
+  currentUser = {...currentUser,
+    elo: newEloVal,
+    gamesPlayed: me.gamesPlayed+1,
+    wins: me.wins+(result==='win'?1:0),
+    losses: me.losses+(result==='loss'?1:0),
+    draws: (me.draws||0)+(result==='draw'?1:0),
+    totalCorrect: (me.totalCorrect||0)+myScore,
+    totalAnswered: (me.totalAnswered||0)+questions.length,
+    lastActive: Date.now()
+  };
+
+  // Monthly ELO tracking
+  const month = getMonth();
+  if(currentUser.currentMonth !== month) {
+    currentUser.currentMonth = month;
+    currentUser.monthlyElo = 0;
+    currentUser.monthlyGames = 0;
+  }
+  currentUser.monthlyElo = (currentUser.monthlyElo||0) + Math.max(0, delta);
+  currentUser.monthlyGames = (currentUser.monthlyGames||0)+1;
+
+  if(!DEMO_MODE) {
+    await db.collection('users').doc(me.uid).update({
+      elo: newEloVal,
+      gamesPlayed: firebase.firestore.FieldValue.increment(1),
+      wins: firebase.firestore.FieldValue.increment(result==='win'?1:0),
+      losses: firebase.firestore.FieldValue.increment(result==='loss'?1:0),
+      draws: firebase.firestore.FieldValue.increment(result==='draw'?1:0),
+      totalCorrect: firebase.firestore.FieldValue.increment(myScore),
+      totalAnswered: firebase.firestore.FieldValue.increment(questions.length),
+      monthlyElo: firebase.firestore.FieldValue.increment(Math.max(0,delta)),
+      monthlyGames: firebase.firestore.FieldValue.increment(1),
+      currentMonth: month, lastActive: Date.now()
+    });
+    await db.collection('games').doc(s.gameId).update({status:'finished'});
+    await updateLeaderboardEntry(currentUser);
+    // Clean matchmaking
+    db.collection('matchmaking').doc(me.uid).delete().catch(()=>{});
+  }
+
+  // Save history locally
+  const histKey = 'ww_hist_'+me.uid;
+  let hist = []; try{ hist=JSON.parse(localStorage.getItem(histKey)||'[]'); }catch{}
+  hist.unshift({result, opp:opp.username, oppElo:opp.elo, score:`${myScore}-${oppScore}`, eloDelta:delta, time:Date.now()});
+  localStorage.setItem(histKey, JSON.stringify(hist.slice(0,50)));
+
+  showResults(result, myScore, oppScore, delta, newEloVal, opp);
+}
+
+function showResults(result, myScore, oppScore, delta, newElo, opp) {
+  showPage('results');
+  const icons = {win:'🏆',loss:'💀',draw:'🤝'};
+  const subs = {
+    win: t('result_sub_win',{opp:opp.username}),
+    loss: t('result_sub_loss',{opp:opp.username}),
+    draw: t('result_sub_draw')
+  };
+  document.getElementById('resBanner').className = 'res-banner '+result;
+  document.getElementById('resEmoji').textContent = icons[result];
+  document.getElementById('resTitle').textContent = t('result_'+result);
+  document.getElementById('resTitle').className = 'res-title '+result;
+  document.getElementById('resSub').textContent = subs[result];
+  document.getElementById('rsMy').textContent  = myScore;
+  document.getElementById('rsOpp').textContent = oppScore;
+  document.getElementById('rsOppName').textContent = opp.username;
+  const sign = delta>=0?'+':'';
+  const cls  = delta>0?'edp':delta<0?'edn':'edn0';
+  document.getElementById('eloChg').innerHTML =
+    `<span>ELO:</span><span>${battleState.me.elo} → ${newElo}</span><span class="${cls}">(${sign}${delta})</span>`;
+}
+
+// ══════════════════════════════════════════════════════
+// 9. LEADERBOARD
+// ══════════════════════════════════════════════════════
+async function updateLeaderboardEntry(u) {
+  if(DEMO_MODE) return;
+  const month = getMonth();
+  const ref = db.collection('leaderboard').doc(month).collection('players').doc(u.uid);
+  await ref.set({
+    uid:u.uid, username:u.username, elo:u.elo,
+    photoURL:u.photoURL||null,
+    wins:u.wins, gamesPlayed:u.gamesPlayed,
+    winRate:u.gamesPlayed>0?Math.round(u.wins/u.gamesPlayed*100):0
+  }, {merge:true});
+}
+
+async function getLeaderboard() {
+  if(DEMO_MODE) return [];
+  const month = getMonth();
+  const snap = await db.collection('leaderboard').doc(month).collection('players')
+    .orderBy('elo','desc').limit(100).get();
+  const result = [];
+  snap.forEach(d=> result.push(d.data()));
+  return result;
+}
+
+async function renderLeaderboard() {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth()+1, 1);
+  const ms = end-now;
+  const days=Math.floor(ms/86400000), hrs=Math.floor((ms%86400000)/3600000);
+  document.getElementById('resetBadge').textContent = t('resets_in',{d:days,h:hrs});
+
+  let board = [];
+  if(!DEMO_MODE) {
+    try { board = await getLeaderboard(); } catch{}
+  }
+
+  renderPodium(board.slice(0,3));
+  const tbody = document.getElementById('lbBody');
+  if(board.length<=3){ tbody.innerHTML=`<div class="lb-empty">${t('lb_desc')}</div>`; return; }
+
+  tbody.innerHTML = board.slice(3).map((p,i)=>{
+    const rank=i+4;
+    const me = currentUser && p.uid===currentUser.uid;
+    const diff = getDiff(p.elo);
+    const av = p.photoURL
+      ? `<img class="pl-av-s" src="${p.photoURL}" onerror="this.outerHTML='<div class=pl-av-text>${p.username[0].toUpperCase()}</div>'">`
+      : `<div class="pl-av-text">${p.username[0].toUpperCase()}</div>`;
+    return `<div class="lb-row${me?' me':''}">
+      <div class="rank-n">${rank}</div>
+      <div class="pl-cell">${av}
+        <div><div class="pl-name">${p.username}${me?` <span style="color:var(--primary);font-size:10px">(YOU)</span>`:''}</div>
+        <span class="badge ${diff.cls}" style="font-size:10px">${diff.emoji} ${diff.label}</span></div>
+      </div>
+      <div class="elo-c">${p.elo}</div>
+      <div class="wins-c">${p.wins}W</div>
+      <div class="wr-c">${p.winRate}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPodium(top3) {
+  const wrap = document.getElementById('podiumWrap');
+  if(!top3.length){ wrap.innerHTML=`<div style="color:var(--text-muted);padding:40px;font-size:13px">${t('no_battles')}</div>`; return; }
+  const medals=['🥇','🥈','🥉'];
+  const order=[1,0,2];
+  wrap.innerHTML = order.map(i=>{
+    const p=top3[i]; if(!p) return '';
+    const av = p.photoURL
+      ? `<img src="${p.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.innerHTML='${p.username[0].toUpperCase()}'">` 
+      : p.username[0].toUpperCase();
+    return `<div class="pod-item pod-${i+1}">
+      <div class="pod-av" style="background:linear-gradient(135deg,var(--primary),var(--accent))">${av}</div>
+      <div class="pod-name">${p.username}</div>
+      <div class="pod-elo">${p.elo} ELO</div>
+      <div class="pod-base">${medals[i]}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// 10. PROFILE MODAL
+// ══════════════════════════════════════════════════════
+async function openProfile() {
+  const u = currentUser;
+  if(!u) return;
+  const diff = getDiff(u.elo);
+  const acc = u.totalAnswered>0?Math.round(u.totalCorrect/u.totalAnswered*100):0;
+  const wr  = u.gamesPlayed>0?Math.round(u.wins/u.gamesPlayed*100):0;
+  const bigAv = document.getElementById('pBigAv');
+  if(u.photoURL) bigAv.innerHTML=`<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div class=p-bigav-text>${u.username[0].toUpperCase()}</div>'">`;
+  else bigAv.innerHTML=`<div class="p-bigav-text">${u.username[0].toUpperCase()}</div>`;
+  document.getElementById('pName').textContent = u.username;
+  document.getElementById('pEmail').textContent = u.email||'';
+  document.getElementById('pBadge').innerHTML = `<span class="badge ${diff.cls}">${diff.emoji} ${diff.label}</span>`;
+  document.getElementById('ps-elo').textContent   = u.elo;
+  document.getElementById('ps-games').textContent = u.gamesPlayed;
+  document.getElementById('ps-wins').textContent  = u.wins;
+  document.getElementById('ps-wr').textContent    = wr+'%';
+  document.getElementById('ps-acc').textContent   = acc+'%';
+  try {
+    const board = await getLeaderboard();
+    const pos = board.findIndex(p=>p.uid===u.uid);
+    document.getElementById('ps-rank').textContent = pos>=0?'#'+(pos+1):'—';
+  } catch{ document.getElementById('ps-rank').textContent='—'; }
+
+  const ov = document.getElementById('profOv');
+  ov.classList.remove('hidden');
+  requestAnimationFrame(()=>ov.classList.add('show'));
+}
+
+function closeProfile() {
+  const ov = document.getElementById('profOv');
+  ov.classList.remove('show');
+  setTimeout(()=>ov.classList.add('hidden'),300);
+}
+
+// ══════════════════════════════════════════════════════
+// 11. AUTH PAGE HELPERS
+// ══════════════════════════════════════════════════════
+function showAuthTab(tab) {
+  document.getElementById('tabLogin').classList.toggle('active',tab==='login');
+  document.getElementById('tabReg').classList.toggle('active',tab==='register');
+  document.getElementById('formLogin').classList.toggle('hidden',tab!=='login');
+  document.getElementById('formReg').classList.toggle('hidden',tab!=='register');
+}
+
+// ══════════════════════════════════════════════════════
+// 12. UTILS
+// ══════════════════════════════════════════════════════
+function getMonth() {
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+
+function timeAgo(ts) {
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60) return 'just now';
+  const m=Math.floor(s/60); if(m<60) return m+'m ago';
+  const h=Math.floor(m/60); if(h<24) return h+'h ago';
+  return Math.floor(h/24)+'d ago';
+}
+
+function showToast(msg, type='info') {
+  const c = document.getElementById('toastC');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons={success:'✅',error:'❌',info:'💡'};
+  el.innerHTML = `<span>${icons[type]||'📢'}</span><span>${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(()=>{ el.classList.add('rm'); setTimeout(()=>el.remove(),300); },3500);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e=>{
+  if(currentPage==='battle' && battleState && !battleState.answered) {
+    const map={'1':0,'2':1,'3':2,'4':3,'a':0,'b':1,'c':2,'d':3};
+    const idx = map[e.key.toLowerCase()];
+    if(idx!==undefined) selectAnswer(idx);
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// 13. APP INIT
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', ()=>{
+  applyTranslations();
+  showPage('loading');
+
+  const ok = initFirebase();
+
+  if(!ok) {
+    // Demo mode
+    showPage('auth');
+    return;
+  }
+
+  auth.onAuthStateChanged(async fbUser=>{
+    if(fbUser) {
+      await onFirebaseLogin(fbUser);
+    } else {
+      showPage('auth');
+    }
+  });
+});
+</script>
+
+</body>
+</html>

@@ -310,6 +310,9 @@ body{font-family:var(--font-b);background:var(--bg-deep);color:var(--text-primar
 .psbox-v{font-family:var(--font-d);font-size:22px;color:var(--primary);letter-spacing:1px}
 .psbox-l{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 
+/* Ban notice */
+.ban-notice{background:rgba(255,59,59,.12);border:1px solid rgba(255,59,59,.4);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;color:var(--red);font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px}
+
 /* Loading spinner */
 .loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;z-index:10;position:relative}
 .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
@@ -465,6 +468,7 @@ body{font-family:var(--font-b);background:var(--bg-deep);color:var(--text-primar
     <div class="play-area">
       <div class="play-title">⚔️ <span data-t="find_battle">FIND A BATTLE</span></div>
       <div class="play-desc" id="playDesc" data-t="play_desc">Challenge real players near your ELO. 3 questions, one winner.</div>
+      <div id="banNotice" class="ban-notice hidden">⛔ <span id="banNoticeText"></span></div>
       <div class="diff-info" id="diffInfo">—</div><br>
       <button class="btn btn-accent btn-lg" onclick="startMatchmaking()" id="playBtn">
         🎯 <span data-t="play_now">PLAY NOW</span>
@@ -606,7 +610,7 @@ const LANG_CODE = (navigator.language || navigator.userLanguage || 'en').toLower
 
 const T = {
   en: {
-    loading:'Loading...', tagline:'Competitive English Battles', sign_in_title:'SIGN IN TO PLAY',
+    loading:'Loading...', tagltive English Battles', sign_in_title:'SIGN IN TO PLAY',
     sign_in_sub:'Create an account or sign in with Google', continue_google:'Continue with Google',
     or:'OR', login:'LOGIN', register:'REGISTER', email:'Email', password:'Password',
     username:'Username', create_account:'CREATE ACCOUNT', data_info:'Your data is stored securely in the cloud',
@@ -931,22 +935,22 @@ const QUESTIONS = {
 };
 
 function getQsForElo(elo, count=3) {
-  const pool = elo < 1100 ? QUESTIONS.easy : elo < 1500 ? QUESTIONS.medium : QUESTIONS.hard;
+  const pool = elo < 300 ? QUESTIONS.easy : elo < 800 ? QUESTIONS.medium : QUESTIONS.hard;
   return [...pool].sort(()=>Math.random()-.5).slice(0,count);
 }
 
 function getDiff(elo) {
-  if(elo<1100) return {key:'rookie',label:t('rookie'),color:'#4ade80',emoji:'🌱',cls:'b-rookie'};
-  if(elo<1300) return {key:'intermediate',label:t('intermediate'),color:'#facc15',emoji:'⚡',cls:'b-intermediate'};
-  if(elo<1500) return {key:'advanced',label:t('advanced'),color:'#fb923c',emoji:'🔥',cls:'b-advanced'};
-  if(elo<1700) return {key:'expert',label:t('expert'),color:'#f43f5e',emoji:'💎',cls:'b-expert'};
+  if(elo<200)  return {key:'rookie',label:t('rookie'),color:'#4ade80',emoji:'🌱',cls:'b-rookie'};
+  if(elo<500)  return {key:'intermediate',label:t('intermediate'),color:'#facc15',emoji:'⚡',cls:'b-intermediate'};
+  if(elo<900)  return {key:'advanced',label:t('advanced'),color:'#fb923c',emoji:'🔥',cls:'b-advanced'};
+  if(elo<1400) return {key:'expert',label:t('expert'),color:'#f43f5e',emoji:'💎',cls:'b-expert'};
   return {key:'master',label:t('master'),color:'#a855f7',emoji:'👑',cls:'b-master'};
 }
 
 // ══════════════════════════════════════════════════════
 // 2. ELO SYSTEM
 // ══════════════════════════════════════════════════════
-const ELO_START = 1000, ELO_MIN = 400, ELO_MAX = 3000;
+const ELO_START = 0, ELO_MIN = 0, ELO_MAX = 3000;
 function kFactor(g){ return g<30?40:g<100?30:20; }
 function expectedScore(a,b){ return 1/(1+Math.pow(10,(b-a)/400)); }
 function newElo(elo,oppElo,score,games){
@@ -956,8 +960,102 @@ function newElo(elo,oppElo,score,games){
 function eloDelta(elo,oppElo,score,games){ return newElo(elo,oppElo,score,games)-elo; }
 
 // ══════════════════════════════════════════════════════
-// 3. FIREBASE + DEMO MODE
+// 2.5. PROFANITY FILTER (TR/EN/DE/FR/ES/RU/IT)
 // ══════════════════════════════════════════════════════
+const BAD_WORDS = [
+  // Turkish
+  'sik','orospu','amk','bok','göt','piç','oç','aptal','salak','gerizekalı','mal','amına','sikik',
+  'götü','orosp','pezeveng','kahpe','siktir','puşt','ibne','bok','şerefsiz','kevaşe','liboş',
+  'orosbu','sülük','bok','yarrak','taşak','döl','götveren','dölsüz','beyinsiz','gerizekal',
+  // English
+  'fuck','shit','ass','bitch','cunt','cock','dick','pussy','bastard','asshole','motherfucker',
+  'whore','slut','nigger','nigga','fag','faggot','retard','crap','damn','hell','prick','twat',
+  // German
+  'scheiße','arsch','fotze','wichser','hurensohn','schlampe','idiot','blödmann','fick','wixer',
+  // French
+  'merde','putain','salope','connard','enculé','batard','foutre','chier','bite','con',
+  // Spanish
+  'puta','mierda','coño','joder','hostia','gilipollas','cabrón','pendejo','pinche','chinga',
+  // Italian
+  'cazzo','vaffanculo','stronzo','porco','fanculo','merda','puttana',
+  // Russian (transliterated)
+  'ebat','suka','blyad','hui','pizda','mudak','idi na hui',
+  // Common
+  'hate','kill','die','rape','sex','porn','nude','naked','xxx',
+];
+
+function containsProfanity(text) {
+  const clean = text.toLowerCase().replace(/[^a-zğüşıöçа-яёa-z0-9]/gi,'').trim();
+  return BAD_WORDS.some(w => {
+    const wc = w.toLowerCase().replace(/\s+/g,'');
+    return clean.includes(wc);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// 2.7. WARNING / BAN SYSTEM
+// ══════════════════════════════════════════════════════
+// Ban durations in ms for each warning count (index = warnCount after increment)
+const BAN_DURATIONS = [
+  0,            // 1st warning: no ban, just warning
+  2*60*1000,    // 2nd: 2 minutes
+  10*60*1000,   // 3rd: 10 minutes
+  30*60*1000,   // 4th: 30 minutes
+  60*60*1000,   // 5th: 1 hour
+  15*60*60*1000,// 6th: 15 hours
+  24*60*60*1000,// 7th: 24 hours
+  48*60*60*1000,// 8th: 48 hours
+  72*60*60*1000,// 9th+: 72 hours
+];
+
+function getBanDuration(warnCount) {
+  const idx = Math.min(warnCount - 1, BAN_DURATIONS.length - 1);
+  return BAN_DURATIONS[Math.max(0, idx)];
+}
+
+function formatBanTime(ms) {
+  if(ms <= 0) return '';
+  const minutes = Math.floor(ms/60000);
+  if(minutes < 60) return `${minutes} dakika`;
+  const hours = Math.floor(minutes/60);
+  if(hours < 24) return `${hours} saat`;
+  return `${Math.floor(hours/24)} gün`;
+}
+
+async function applyWarnToUser(uid) {
+  if(DEMO_MODE) return;
+  try {
+    const ref = db.collection('users').doc(uid);
+    const snap = await ref.get();
+    if(!snap.exists) return;
+    const data = snap.data();
+    const month = getMonth();
+    let warnCount = (data.warnMonth === month ? (data.warnCount||0) : 0) + 1;
+    const banDuration = getBanDuration(warnCount);
+    const banUntil = banDuration > 0 ? Date.now() + banDuration : (data.banUntil||0);
+    await ref.update({
+      warnCount, warnMonth: month,
+      banUntil,
+      lastWarnAt: Date.now()
+    });
+    // If it's the current user, update in memory
+    if(currentUser && currentUser.uid === uid) {
+      currentUser.warnCount = warnCount;
+      currentUser.warnMonth = month;
+      currentUser.banUntil = banUntil;
+    }
+  } catch(e) { console.warn('applyWarn error:', e); }
+}
+
+function checkBanStatus(user) {
+  const ban = user.banUntil || 0;
+  if(ban > Date.now()) {
+    const left = ban - Date.now();
+    return formatBanTime(left);
+  }
+  return null;
+}
+
 let db, auth, googleProvider;
 let DEMO_USERS={}, DEMO_SESSION=null;
 
@@ -1021,6 +1119,8 @@ async function emailRegister() {
   errEl.textContent = '';
   if(!username||!email||!pass){ errEl.textContent = 'All fields required'; return; }
   if(username.length<3){ errEl.textContent = 'Username min 3 chars'; return; }
+  if(username.length>20){ errEl.textContent = 'Username max 20 chars'; return; }
+  if(containsProfanity(username)){ errEl.textContent = '⛔ Bu kullanıcı adı uygunsuz içerik barındırıyor!'; return; }
   if(pass.length<6){ errEl.textContent = 'Password min 6 chars'; return; }
   try {
     const r = await auth.createUserWithEmailAndPassword(email, pass);
@@ -1039,27 +1139,43 @@ async function onFirebaseLogin(fbUser, forcedUsername) {
   const month = getMonth();
 
   if(!snap.exists) {
-    const username = forcedUsername || fbUser.displayName || fbUser.email.split('@')[0];
+    let username = forcedUsername || fbUser.displayName || fbUser.email.split('@')[0];
+    // Sanitize Google display names that might be offensive
+    if(containsProfanity(username)) username = 'Player'+Math.floor(Math.random()*9999);
     currentUser = {
       uid, username, email: fbUser.email,
       photoURL: fbUser.photoURL || null,
       elo: ELO_START, gamesPlayed:0, wins:0, losses:0, draws:0,
       totalCorrect:0, totalAnswered:0,
       currentMonth: month, monthlyElo:0, monthlyGames:0,
+      warnCount:0, warnMonth: month, banUntil:0,
       lang: LANG_CODE, createdAt: Date.now()
     };
     await ref.set(currentUser);
   } else {
     currentUser = snap.data();
     currentUser.uid = uid;
-    // Monthly reset check
+    // Monthly reset check — ELO leaderboard + warnings
     if(currentUser.currentMonth !== month) {
       currentUser.currentMonth = month;
       currentUser.monthlyElo = 0;
       currentUser.monthlyGames = 0;
-      await ref.update({ currentMonth: month, monthlyElo: 0, monthlyGames: 0 });
+      currentUser.warnCount = 0;  // reset warnings monthly
+      currentUser.warnMonth = month;
+      currentUser.banUntil = 0;   // reset bans monthly
+      await ref.update({
+        currentMonth: month, monthlyElo: 0, monthlyGames: 0,
+        warnCount: 0, warnMonth: month, banUntil: 0
+      });
     }
   }
+
+  // Check if banned
+  const banLeft = checkBanStatus(currentUser);
+  if(banLeft) {
+    showToast(`⛔ ${banLeft} boyunca bansın! Oynayamazsın.`, 'error');
+  }
+
   await updateLeaderboardEntry(currentUser);
   enterApp();
 }
@@ -1100,6 +1216,7 @@ function demoEmailRegister() {
   const pass = document.getElementById('rPass').value;
   if(!username||!email||!pass){ document.getElementById('regErr').textContent='All required'; return; }
   if(username.length<3){ document.getElementById('regErr').textContent='Min 3 chars'; return; }
+  if(containsProfanity(username)){ document.getElementById('regErr').textContent='⛔ Bu kullanıcı adı uygunsuz!'; return; }
   if(pass.length<6){ document.getElementById('regErr').textContent='Min 6 chars'; return; }
   const uid = 'demo_'+Date.now();
   currentUser = {
@@ -1176,6 +1293,17 @@ async function renderDashboard() {
   document.getElementById('scDraw').textContent   = u.draws||0;
   document.getElementById('diffInfo').innerHTML   = `<span class="badge ${diff.cls}">${diff.emoji} ${diff.label}</span>&nbsp;· ${t('difficulty_label')} ${u.elo} ELO`;
 
+  // Ban notice
+  const banEl = document.getElementById('banNotice');
+  const banTxtEl = document.getElementById('banNoticeText');
+  const banLeft = checkBanStatus(u);
+  if(banLeft && banEl && banTxtEl) {
+    banEl.classList.remove('hidden');
+    banTxtEl.textContent = `${banLeft} boyunca bansın! (${u.warnCount}. uyarı)`;
+  } else if(banEl) {
+    banEl.classList.add('hidden');
+  }
+
   // Rank from leaderboard
   try {
     const board = await getLeaderboard();
@@ -1215,6 +1343,14 @@ let mmUnsub = null, mmTimer = null, mmSeconds = 0, mmGameId = null;
 
 async function startMatchmaking() {
   if(!currentUser){ showToast('Not logged in','error'); return; }
+
+  // Ban check
+  const banLeft = checkBanStatus(currentUser);
+  if(banLeft) {
+    showToast(`⛔ ${banLeft} boyunca ban yedин! Bekle.`, 'error');
+    return;
+  }
+
   showPage('matchmaking');
 
   const u = currentUser;
@@ -1238,7 +1374,6 @@ async function startMatchmaking() {
   }, 1000);
 
   if(DEMO_MODE) {
-    // Demo: no real opponent possible
     setTimeout(()=>{
       clearInterval(mmTimer);
       showToast(t('no_opponent'),'error');
@@ -1247,78 +1382,101 @@ async function startMatchmaking() {
     return;
   }
 
-  // Write to matchmaking pool
+  // Write to matchmaking pool with server timestamp
   const mmRef = db.collection('matchmaking').doc(u.uid);
   await mmRef.set({
     uid: u.uid, username: u.username, elo: u.elo,
-    photoURL: u.photoURL||null, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    status:'waiting', gameId:null
+    photoURL: u.photoURL||null,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    status: 'waiting', gameId: null
   });
 
-  // Try to find an existing waiting player
+  // Small delay to allow server timestamp to settle
+  await new Promise(r => setTimeout(r, 800));
+
+  // Try to find an existing waiting player — simple query, filter self client-side
   const snapshot = await db.collection('matchmaking')
     .where('status','==','waiting')
-    .where('uid','!=',u.uid)
-    .orderBy('uid').orderBy('timestamp').limit(10)
+    .orderBy('timestamp')
+    .limit(20)
     .get();
 
-  // Find best ELO match
+  // Find best ELO match (excluding self)
   let bestOpp = null, bestDiff = Infinity;
   snapshot.forEach(doc=>{
     const d = doc.data();
-    const diff = Math.abs(d.elo - u.elo);
+    if(d.uid === u.uid) return; // skip self
+    const diff = Math.abs((d.elo||0) - (u.elo||0));
     if(diff < bestDiff){ bestDiff=diff; bestOpp=d; }
   });
 
   if(bestOpp) {
-    // We found an opponent — create the game
-    const gameId = db.collection('games').doc().id;
-    const questions = getQsForElo(Math.min(u.elo, bestOpp.elo), 3);
+    // Try to create a game via transaction
+    try {
+      const gameId = db.collection('games').doc().id;
+      const questions = getQsForElo(Math.min(u.elo||0, bestOpp.elo||0), 3);
 
-    await db.runTransaction(async tx=>{
-      const oppRef = db.collection('matchmaking').doc(bestOpp.uid);
-      const oppSnap = await tx.get(oppRef);
-      if(!oppSnap.exists || oppSnap.data().status !== 'waiting') throw new Error('Opponent taken');
+      await db.runTransaction(async tx=>{
+        const oppRef = db.collection('matchmaking').doc(bestOpp.uid);
+        const myRef  = db.collection('matchmaking').doc(u.uid);
+        const oppSnap = await tx.get(oppRef);
+        const mySnap  = await tx.get(myRef);
 
-      const gameRef = db.collection('games').doc(gameId);
-      tx.set(gameRef, {
-        player1:{uid:u.uid,username:u.username,elo:u.elo,photoURL:u.photoURL||null},
-        player2:{uid:bestOpp.uid,username:bestOpp.username,elo:bestOpp.elo,photoURL:bestOpp.photoURL||null},
-        questions: questions.map(q=>q.id),
-        p1Answers:[], p2Answers:[], currentQ:0,
-        status:'active', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        // Verify both are still waiting
+        if(!oppSnap.exists || oppSnap.data().status !== 'waiting') throw new Error('Opponent taken');
+        if(!mySnap.exists  || mySnap.data().status  !== 'waiting') throw new Error('Already matched');
+
+        const gameRef = db.collection('games').doc(gameId);
+        tx.set(gameRef, {
+          player1:{uid:u.uid,username:u.username,elo:u.elo||0,photoURL:u.photoURL||null},
+          player2:{uid:bestOpp.uid,username:bestOpp.username,elo:bestOpp.elo||0,photoURL:bestOpp.photoURL||null},
+          questions: questions.map(q=>q.id),
+          p1Answers:[], p2Answers:[],
+          p1LastSeen: Date.now(), p2LastSeen: Date.now(),
+          currentQ:0,
+          status:'active', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        tx.update(mmRef,                                      {status:'matched', gameId});
+        tx.update(oppRef,                                     {status:'matched', gameId});
       });
-      tx.update(mmRef, {status:'matched', gameId});
-      tx.update(oppRef, {status:'matched', gameId});
-    });
 
-    clearInterval(mmTimer);
-    showOppInMM(bestOpp);
-    document.getElementById('mmStatus').textContent = t('matched_with',{opp:bestOpp.username});
-    setTimeout(()=> startBattle(gameId, questions, u, bestOpp, 'p1'), 1500);
+      clearInterval(mmTimer);
+      showOppInMM(bestOpp);
+      document.getElementById('mmStatus').textContent = t('matched_with',{opp:bestOpp.username});
+      setTimeout(()=> startBattle(gameId, questions, u, bestOpp, 'p1'), 1500);
+
+    } catch(err) {
+      console.warn('Transaction failed, waiting as p2:', err.message);
+      // Fall through to waiting mode
+      waitForMatch(u, mmRef);
+    }
   } else {
     // Wait for someone to find us
-    mmUnsub = db.collection('matchmaking').doc(u.uid).onSnapshot(snap=>{
-      const d = snap.data();
-      if(d && d.status==='matched' && d.gameId) {
-        clearInterval(mmTimer);
-        if(mmUnsub){ mmUnsub(); mmUnsub=null; }
-        // Load game
-        db.collection('games').doc(d.gameId).get().then(gSnap=>{
-          const g = gSnap.data();
-          const opp = g.player1.uid===u.uid ? g.player2 : g.player1;
-          const myRole = g.player1.uid===u.uid ? 'p1' : 'p2';
-          const questions = g.questions.map(qid=>{
-            const allQ = [...QUESTIONS.easy,...QUESTIONS.medium,...QUESTIONS.hard];
-            return allQ.find(q=>q.id===qid);
-          });
-          showOppInMM(opp);
-          document.getElementById('mmStatus').textContent = t('matched_with',{opp:opp.username});
-          setTimeout(()=> startBattle(d.gameId, questions, u, opp, myRole), 1500);
-        });
-      }
-    });
+    waitForMatch(u, mmRef);
   }
+}
+
+function waitForMatch(u, mmRef) {
+  if(mmUnsub){ mmUnsub(); mmUnsub=null; }
+  mmUnsub = mmRef.onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const d = snap.data();
+    if(d && d.status==='matched' && d.gameId) {
+      clearInterval(mmTimer);
+      if(mmUnsub){ mmUnsub(); mmUnsub=null; }
+      db.collection('games').doc(d.gameId).get().then(gSnap=>{
+        if(!gSnap.exists) return;
+        const g = gSnap.data();
+        const opp = g.player1.uid===u.uid ? g.player2 : g.player1;
+        const myRole = g.player1.uid===u.uid ? 'p1' : 'p2';
+        const allQ = [...QUESTIONS.easy,...QUESTIONS.medium,...QUESTIONS.hard];
+        const questions = (g.questions||[]).map(qid=> allQ.find(q=>q.id===qid)).filter(Boolean);
+        showOppInMM(opp);
+        document.getElementById('mmStatus').textContent = t('matched_with',{opp:opp.username});
+        setTimeout(()=> startBattle(d.gameId, questions, u, opp, myRole), 1500);
+      });
+    }
+  });
 }
 
 function setMMPlayer(side, p) {
@@ -1352,26 +1510,81 @@ function cancelMatchmaking() {
 // ══════════════════════════════════════════════════════
 // 8. BATTLE
 // ══════════════════════════════════════════════════════
-let battleState = null, battleUnsub = null;
+let battleState = null, battleUnsub = null, battleHeartbeat = null;
 
 async function startBattle(gameId, questions, me, opp, myRole) {
   battleState = {
     gameId, questions, me, opp, myRole,
     currentQ:0, myScore:0, oppScore:0,
     myAnswers:[], oppAnswers:[],
-    timer:null, timeLeft:15, answered:false
+    timer:null, timeLeft:15, answered:false,
+    abandoned: false
   };
 
   showPage('battle');
   renderBattleHeader();
 
+  // ── HEARTBEAT: prove we're still here every 5s ──
+  const myHbField = myRole==='p1' ? 'p1LastSeen' : 'p2LastSeen';
+  if(battleHeartbeat) clearInterval(battleHeartbeat);
+  battleHeartbeat = setInterval(async ()=>{
+    if(!battleState || battleState.abandoned) return;
+    try {
+      await db.collection('games').doc(gameId).update({ [myHbField]: Date.now() });
+    } catch{}
+  }, 5000);
+
+  // ── DISCONNECT GUARD: mark forfeit on page leave ──
+  const handleLeave = () => {
+    if(!battleState || battleState.abandoned) return;
+    // Best-effort write before page unloads
+    const forfeitField = myRole==='p1' ? 'p1Forfeited' : 'p2Forfeited';
+    navigator.sendBeacon && navigator.sendBeacon('/');
+    try {
+      db.collection('games').doc(gameId).update({
+        [forfeitField]: true, status:'abandoned'
+      });
+    } catch{}
+  };
+  window.__battleLeaveHandler = handleLeave;
+  window.addEventListener('beforeunload', handleLeave);
+  window.addEventListener('pagehide', handleLeave);
+
   if(!DEMO_MODE) {
-    // Listen to real-time updates
-    battleUnsub = db.collection('games').doc(gameId).onSnapshot(snap=>{
+    const oppHbField = myRole==='p1' ? 'p2LastSeen' : 'p1LastSeen';
+    const oppForfeitField = myRole==='p1' ? 'p2Forfeited' : 'p1Forfeited';
+
+    battleUnsub = db.collection('games').doc(gameId).onSnapshot(async snap=>{
       const g = snap.data();
       if(!g || !battleState) return;
+
+      // Detect opponent forfeit / disconnect
+      if((g[oppForfeitField] || g.status==='abandoned') && !battleState.abandoned) {
+        battleState.abandoned = true;
+        cleanupBattle();
+        // Apply warning to opponent
+        await applyWarnToUser(opp.uid);
+        const warnInfo = await getWarnCount(opp.uid);
+        // Force win for me
+        showToast(`🏆 Rakip oyunu terk etti! Kazandın. (Uyarı ${warnInfo}. kez uygulandı)`, 'success');
+        await endBattle(true); // forced win
+        return;
+      }
+
+      // Stale heartbeat check (>20s with no update = disconnected)
+      const oppHb = g[oppHbField] || 0;
+      if(oppHb > 0 && Date.now() - oppHb > 20000 && !battleState.abandoned) {
+        battleState.abandoned = true;
+        cleanupBattle();
+        await db.collection('games').doc(gameId).update({ [oppForfeitField]: true, status:'abandoned' });
+        await applyWarnToUser(opp.uid);
+        showToast(`🏆 Rakip bağlantısı kesildi! Kazandın.`, 'success');
+        await endBattle(true);
+        return;
+      }
+
+      // Normal game state sync
       const oppAnswers = myRole==='p1' ? (g.p2Answers||[]) : (g.p1Answers||[]);
-      // If opponent answered current question and we haven't resolved yet
       const qi = battleState.currentQ;
       if(oppAnswers.length > qi && battleState.oppAnswers.length <= qi) {
         battleState.oppAnswers.push(oppAnswers[qi]);
@@ -1385,6 +1598,22 @@ async function startBattle(gameId, questions, me, opp, myRole) {
   }
 
   showQuestion();
+}
+
+async function getWarnCount(uid) {
+  try {
+    const snap = await db.collection('users').doc(uid).get();
+    if(snap.exists) return snap.data().warnCount || 1;
+  } catch{}
+  return 1;
+}
+
+function cleanupBattle() {
+  if(battleHeartbeat){ clearInterval(battleHeartbeat); battleHeartbeat=null; }
+  if(battleUnsub){ battleUnsub(); battleUnsub=null; }
+  if(battleState?.timer) clearInterval(battleState.timer);
+  window.removeEventListener('beforeunload', window.__battleLeaveHandler);
+  window.removeEventListener('pagehide', window.__battleLeaveHandler);
 }
 
 function renderBattleHeader() {
@@ -1527,18 +1756,24 @@ function resolveQuestion() {
   setTimeout(()=>{
     s.currentQ++;
     if(s.currentQ < s.questions.length) showQuestion();
-    else endBattle();
+    else endBattle(false);
   }, 2500);
 }
 
-async function endBattle() {
-  if(battleUnsub){ battleUnsub(); battleUnsub=null; }
+async function endBattle(forcedWin = false) {
+  cleanupBattle();
   const s = battleState;
+  if(!s) return;
   const {me, opp, myScore, oppScore, questions} = s;
 
-  let result = myScore>oppScore?'win':myScore<oppScore?'loss':'draw';
+  let result;
+  if(forcedWin) {
+    result = 'win';
+  } else {
+    result = myScore>oppScore?'win':myScore<oppScore?'loss':'draw';
+  }
   const score = result==='win'?1:result==='loss'?0:0.5;
-  const delta = eloDelta(me.elo, opp.elo, score, me.gamesPlayed);
+  const delta = eloDelta(me.elo||0, opp.elo||0, score, me.gamesPlayed);
   const newEloVal = me.elo + delta;
 
   // Update local user
@@ -1801,4 +2036,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </script>
 
 </body>
-</html>
+</html>ine:'Competi
